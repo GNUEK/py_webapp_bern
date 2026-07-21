@@ -17,7 +17,7 @@ is the main Python file? In the simplest case, this could look something like
 this:
 
 ``
-    python main.py
+    uv run src/app/main.py
 ``
 
 In other cases the user might have to install some project dependencies first
