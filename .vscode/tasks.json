@@ -2,13 +2,21 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Bundle for Submission",
+            "label": "uv: sync environment",
             "type": "shell",
+            "command": "uv sync --locked --all-groups",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "runOptions": {
+                "runOn": "folderOpen",
+                "instanceLimit": 1
+            },
             "problemMatcher": [],
-            "command": "git bundle create ${workspaceFolderBasename}.bundle --all",
             "presentation": {
-                "reveal": "always",
-                "panel": "new"
+                "reveal": "silent",
+                "panel": "dedicated",
+                "close": true
             }
         }
     ]

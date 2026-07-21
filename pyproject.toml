@@ -34,6 +34,9 @@ select = [
     "B",
 ]
 
+[tool.ruff.format]
+exclude = ["*.md"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

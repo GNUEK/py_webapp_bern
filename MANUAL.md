@@ -3,43 +3,28 @@ project template.
 
 # Getting Started in VSCode
 
-Before starting, make sure you have the following VS Code extensions installed:
+When opening this project the first time with VS Code, you might see suggestions
+for extensions to be installed. It is recommended to let VS Code install them
+as they can be helpful for your basic development needs when programming with
+Python.
 
-  * "Python" for general Python support. Extension id `ms-python.python`
-  * "Black Formatter" for automatic formatting of Python code. Extension id `ms-python.black-formatter`
-
-To get an initial virtual environment for your project, perform the following
-steps:
-
-  1. Type `Ctrl-Shift-P` and enter "Python: Create Environment...", hit the
-     `Enter` key
-  2. Choose `Venv` for the "environment tpye" if asked
-  3. Choose your installed Python interpreter
-  4. Tick the checkbox for installing the dependencies in `requirements.txt`
-  5. Wait for the "Creating environment" step to complete
-
-With the first saving of a Python file, you might see a message box saying that
-"You have the Black formatter extension installed, ...". For this, choose "Yes"
-to use the automatic code formatting feature.
-
-The full tutorial to get started with Python under VSCode can be found here:
-https://code.visualstudio.com/docs/python/python-tutorial
+**IMPORTANT** VS Code will also inform you that this project has an automatic
+task configured which would be run when opening this project the first time.
+If you don't want to run the `uv sync` command manually in the terminal, you can
+allow VS Code to run this automatically.
 
 # Handin your solution
 
-You can either handin your source code by submitting something called a Git
-bundle. The section "Submission via Moodle or other LMS" explains how you
-can create such a bundle.
-
-Alternatively you can also share your repository with the lecturer.
+To handin your solution, share your repository with the lecturers. Invite them
+as Developer on your GitHub repository.
 
 Please make sure, you check the following points before handing in your
 solution code:
 
-* [ ] Have you included any Python standard libraries in `requirements.txt`?
+* [ ] Have you included any Python standard libraries in `pyproject.toml`?
       Libraries like `sys`, `os`, `pathlib` etc. are already part of the
       standard Python installation and must not be included in the
-      `requirements.txt` file. Please remove them before submission.
+      `pyproject.toml` file. Please remove them before submission.
 * [ ] Does your project refer to absolute directories?
       Your colleagues and your lecturer might download your source code into
       different directories than you did. Make sure, you use project-relative
@@ -48,29 +33,6 @@ solution code:
 * [ ] Does your README.md still contain text between `<` and `>`?
       This text is meant as placeholders. Please replace this text including
       the `<` and `>` characters with your own text.
-
-## Submission via Moodle or other LMS
-
-From the root directory of your project run the following git command:
-
-    git bundle create <projectname>.bundle --all
-
-Now you can simply upload the newly created file `<projectname>.bundle` to
-Moodle.
-
-Make sure you replace `<projectname>` in the above examples with a name that
-identifies your own project.
-
-### Using the provided VS Code task
-
-Alternatively you can also use the VS Code task "Bundle for Submission" by
-following these steps:
-
-  1. Type `Ctrl-Shift-P` and enter "Tasks: Run Tasks", hit the `Enter` key
-  2. Select the task "Bundle for Submission" and hit the `Enter` key
-
-Now you should find a `.bundle` file in your project folder that is named
-with your project folder name. This can be submitted to Moodle.
 
 # FAQ
 
