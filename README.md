@@ -20,12 +20,12 @@ this:
     python main.py
 ``
 
-In other cases the user might first have to install some project dependencies
-first has to run something like this (a sample requirements.txt file is also
-included in the project template):
+In other cases the user might have to install some project dependencies first
+and has to run something like this (a pyproject.toml file is also included in
+the project template):
 
 ``
-    pip install -r requirements.txt
+    uv sync
 ``
 
 ## Understanding the sources

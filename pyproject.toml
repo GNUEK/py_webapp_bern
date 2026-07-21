@@ -1,0 +1,52 @@
+[project]
+name = "py-webapp-template"
+version = "0.1.0"
+description = "Web application project for the software development module"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.0",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=24.0",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = [
+    "--strict-markers",
+    "--cov=app",
+    "--cov-report=term-missing",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
