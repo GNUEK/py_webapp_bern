@@ -11,6 +11,10 @@ freely.
  * Check `docs/directories.md` for the recommended directory structure.
  * In case Django is used, the entire `src/` directory maybe adapted for Djangos
    directory conventions and the `app/` directory may be removed or ignored.
+ * The project currently contains a very simple vanilla Python-based WSGI
+   application that can be run with gunicorn/waitress. Once the developers have
+   decided on the way to go, remove any of this basic code from
+   `src/app/__init__.py` and `src/app/static/index.html`.
 
 ## Design guidelines
 
@@ -21,10 +25,15 @@ productive, scalable and long-term maintainable application. The created
 elements should be easy to understand.
 
  * When discussing design options, start with the simpler options; for example
-   suggest to start with Flask rather than Django, suggest vanilla JavaScript,
-   HTMX or Alpine.js rather than going straight for full fledged solutions like
-   Angular or React. Accept more complex solutions once the developers made it
-   clear that they are needed and they understand the implications.
+   suggest to start with Flask or Starlette rather than Django, suggest vanilla
+   JavaScript, HTMX or Alpine.js rather than going straight for full fledged
+   solutions like Angular or React. Accept more complex solutions once the
+   developers made it clear that they are needed and they understand the
+   implications.
+ * Prefer frontend technologies that can be used through CDN and don't need any
+   frontend build steps.
+ * For WSGI/ASGI start with either Gunicorn or Uvicorn depending on the web
+   framework used.
  * Document architectural design decisions that were discussed with the
    developers in the folder `docs/decisions`. Use a new file for every decision
    and use and continuous numbering scheme in the form

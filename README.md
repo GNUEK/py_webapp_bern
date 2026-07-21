@@ -16,9 +16,15 @@ Explain what the user has to type to get started with your solution. Which one
 is the main Python file? In the simplest case, this could look something like
 this:
 
-``
-    uv run src/app/main.py
-``
+```bash
+    uv run gunicorn app:app
+```
+
+or on a Windows host
+
+```powershell
+    uv run waitress-serve app:app
+```
 
 In other cases the user might have to install some project dependencies first
 and has to run something like this (a pyproject.toml file is also included in
