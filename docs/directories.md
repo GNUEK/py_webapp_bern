@@ -5,6 +5,9 @@ what their purpose is and how you can use them.
 
  * `.github` will later contain the workflow descriptions which will instruct
    GitHub to automatically deploy your web application.
+ * `.agents` contains optional agent-facing instructions and reusable skills.
+   The folder `.agents/skills` is intended for generic skills that can also be
+   used by other kinds of coding agents.
  * `.vscode` contains useful settings for working in VS Code.
  * `.venv` contains the locally installed libraries as setup and installed by
    `uv`.
@@ -13,6 +16,9 @@ what their purpose is and how you can use them.
    possibly complex steps needed for your application in this directory. The
    folder `docs/decisions` in particular is used to document any application
    wide design decisions you made for this project.
+   `docs/agent-collaboration.md` explains how students should work with coding
+   agents in this template, and `docs/decision-template.md` provides a starter
+   structure for decision records.
    `docs/deployment-azure-app-service-flask.md` contains optional deployment
    notes for teams that choose Flask and deployment to Azure App Service with
    the built-in Python runtime.

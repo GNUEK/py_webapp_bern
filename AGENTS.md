@@ -43,5 +43,20 @@ elements should be easy to understand.
    framework used.
  * Document architectural design decisions that were discussed with the
    developers in the folder `docs/decisions`. Use a new file for every decision
-   and use and continuous numbering scheme in the form
+   and use a continuous numbering scheme in the form
    `0001-framework-choice.md`.
+
+## Educational collaboration
+
+This template is used for learning software development, not only for producing
+code. When students ask an agent to add a feature, choose a technology, or make
+an architectural change, the agent should first help them reason about the
+decision before implementing it.
+
+Reusable guidance for this behavior is stored as the generic agent skill
+`.agents/skills/challenge-development-decisions`. Agents that support skills
+should use that skill for feature requests, technology choices, architecture
+placement questions, and decision records in this project.
+
+Decision records for this project belong in `docs/decisions` and should be
+based on `docs/decision-template.md`.
