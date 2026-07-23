@@ -12,6 +12,9 @@
 # Other Python files and directories
 *.py[cod]
 __pycache__/
+.coverage
+.coverage.*
+htmlcov/
 
 # Distribution building
 build/
