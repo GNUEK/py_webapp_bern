@@ -13,6 +13,9 @@ what their purpose is and how you can use them.
    possibly complex steps needed for your application in this directory. The
    folder `docs/decisions` in particular is used to document any application
    wide design decisions you made for this project.
+   `docs/deployment-azure-app-service-flask.md` contains optional deployment
+   notes for teams that choose Flask and deployment to Azure App Service with
+   the built-in Python runtime.
  * The folder `src/app` is where your Python backend code will live. The folder
    `src/app/static` will take your frontend code.
 
@@ -30,3 +33,6 @@ modification by a developer:
    for example for adding and removing packages, you can use `uv add ...` and
    `uv remove ...` and uv will automatically update `pyproject.toml` for you.
    Remember to add the modified version to Git.
+ * `startup.sh` should be added if you deploy a Flask application to Azure
+   App Service with the built-in Python runtime. See
+   `docs/deployment-azure-app-service-flask.md` for the required content.

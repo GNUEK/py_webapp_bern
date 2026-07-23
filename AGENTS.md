@@ -15,6 +15,13 @@ freely.
    application that can be run with gunicorn/waitress. Once the developers have
    decided on the way to go, remove any of this basic code from
    `src/app/__init__.py` and `src/app/static/index.html`.
+ * If the developers choose Flask and deployment to Azure App Service with the
+   built-in Python runtime, follow
+   `docs/deployment-azure-app-service-flask.md`. In particular, create a
+   root-level `startup.sh` for Gunicorn and make sure `src/app/__init__.py`
+   exposes a Flask application object named `app` so `app:app` can be imported.
+   Keep these steps conditional; do not add Flask-specific Azure files when the
+   team chooses Django, FastAPI, Starlette or a container-based deployment.
 
 ## Design guidelines
 
