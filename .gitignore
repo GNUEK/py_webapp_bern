@@ -43,3 +43,6 @@ venv/
 
 # MacOS files
 .DS_Store
+
+# Lokale SQLite-Datenbank (wird beim Start automatisch angelegt)
+instance/
