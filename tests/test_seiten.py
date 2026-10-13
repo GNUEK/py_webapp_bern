@@ -170,6 +170,90 @@ def test_komponente_tauschen(client, app):
     assert neu[0]["letzte_wartung_km"] == 3200
 
 
+def bearbeite_komponente(client, komponente_id=1, **werte):
+    daten = {
+        "bezeichnung": "Kette",
+        "kategorie": "Kette",
+        "einbau_datum": "2026-01-01",
+        "einbau_km": "1000",
+        "intervall_km": "3000",
+        "intervall_tage": "",
+        **werte,
+    }
+    return client.post(f"/komponenten/{komponente_id}/bearbeiten", data=daten)
+
+
+def test_komponente_bearbeiten(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, bezeichnung="Ketet", intervall_km="300")
+    formular = client.get("/komponenten/1/bearbeiten").text
+    assert 'value="Ketet"' in formular  # Formular ist vorausgefüllt
+
+    antwort = bearbeite_komponente(
+        client, bezeichnung="Kette", kategorie="Kassette", intervall_km="3000"
+    )
+    assert antwort.status_code == 302
+
+    komponente = komponenten(app)[0]
+    assert komponente["bezeichnung"] == "Kette"
+    assert komponente["kategorie"] == "Kassette"
+    assert komponente["intervall_km"] == 3000
+
+
+def test_einbau_aendern_ohne_wartung_verschiebt_zaehlung(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, einbau_km="1000", einbau_datum="2026-05-01")
+
+    bearbeite_komponente(client, einbau_km="200", einbau_datum="2026-02-01")
+
+    komponente = komponenten(app)[0]
+    assert komponente["einbau_km"] == 200
+    assert komponente["letzte_wartung_km"] == 200
+    assert komponente["letzte_wartung_datum"] == "2026-02-01"
+
+
+def test_einbau_aendern_mit_wartung_behaelt_letzte_wartung(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, einbau_km="0")
+    client.post(
+        "/komponenten/1/wartung", data={"datum": "2026-06-01", "km_stand": "500"}
+    )
+    client.post(
+        "/komponenten/1/wartung", data={"datum": "2026-10-01", "km_stand": "800"}
+    )
+
+    bearbeite_komponente(client, einbau_km="100")
+    komponente = komponenten(app)[0]
+    assert komponente["einbau_km"] == 100
+    assert komponente["letzte_wartung_km"] == 800
+    assert komponente["letzte_wartung_datum"] == "2026-10-01"
+
+    # Einbau nach der ersten Wartung ist nicht möglich
+    antwort = bearbeite_komponente(client, einbau_km="700")
+    assert antwort.status_code == 400
+    antwort = bearbeite_komponente(client, einbau_datum="2026-07-01")
+    assert antwort.status_code == 400
+    assert komponenten(app)[0]["einbau_km"] == 100
+
+
+def test_ungueltige_bearbeitung_aendert_nichts(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, bezeichnung="Kette")
+    antwort = bearbeite_komponente(client, bezeichnung=" ", einbau_km="5000")
+    assert antwort.status_code == 400
+    assert komponenten(app)[0]["bezeichnung"] == "Kette"
+
+
+def test_ausgebaute_komponente_nicht_bearbeitbar(client, app):
+    erfasse_velo(client)
+    erfasse_komponente(client, bezeichnung="Kette")
+    client.post("/komponenten/1/ausbauen")
+
+    antwort = bearbeite_komponente(client, bezeichnung="Neu")
+    assert antwort.status_code == 302
+    assert komponenten(app, aktiv=0)[0]["bezeichnung"] == "Kette"
+
+
 def test_velo_loeschen_entfernt_komponenten(client, app):
     erfasse_velo(client)
     erfasse_komponente(client)

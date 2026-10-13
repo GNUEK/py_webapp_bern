@@ -102,6 +102,8 @@
                             href="{{ url_for('velos.wartung_erfassen', komponente_id=k.id) }}">Gewartet</a>
                         {% endif %}
                         <a class="btn btn-outline-primary btn-sm"
+                            href="{{ url_for('velos.komponente_bearbeiten', komponente_id=k.id) }}">Bearbeiten</a>
+                        <a class="btn btn-outline-primary btn-sm"
                             href="{{ url_for('velos.komponente_tauschen', komponente_id=k.id) }}">Tauschen</a>
                         <form method="post" action="{{ url_for('velos.komponente_ausbauen', komponente_id=k.id) }}"
                             onsubmit="return confirm('Komponente ohne Ersatz ausbauen?')">

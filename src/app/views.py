@@ -365,9 +365,78 @@ def komponente_tauschen(komponente_id: int):
     )
     speichere_komponente(velo["id"], daten)
     db.commit()
-    flash(
-        f"«{alt['bezeichnung']}» ersetzt durch «{daten['bezeichnung']}».", "success"
+    flash(f"«{alt['bezeichnung']}» ersetzt durch «{daten['bezeichnung']}».", "success")
+    return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
+
+
+@bp.route("/komponenten/<int:komponente_id>/bearbeiten", methods=["GET", "POST"])
+def komponente_bearbeiten(komponente_id: int):
+    """Angaben einer aktiven Komponente korrigieren, z.B. nach einem Tippfehler."""
+    komponente = lade_komponente(komponente_id)
+    velo = lade_velo(komponente["velo_id"])
+    if not komponente["aktiv"]:
+        flash("Ausgebaute Komponenten können nicht bearbeitet werden.", "warning")
+        return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
+
+    if request.method == "GET":
+        return komponente_formular_anzeigen(velo, komponente, "bearbeiten")
+
+    db = get_db()
+    erste_wartung = db.execute(
+        "SELECT MIN(km_stand) AS km, MIN(datum) AS datum FROM wartung"
+        " WHERE komponente_id = ?",
+        (komponente_id,),
+    ).fetchone()
+    hat_wartungen = erste_wartung["km"] is not None
+
+    fehler = f.Fehlerliste()
+    daten = komponente_aus_formular(fehler, velo)
+    # Der Einbau muss vor der ersten erfassten Wartung liegen
+    if hat_wartungen:
+        if daten["einbau_km"] is not None and daten["einbau_km"] > erste_wartung["km"]:
+            fehler.append(
+                "Der Kilometerstand beim Einbau ist grösser als bei der "
+                "ersten Wartung."
+            )
+        if daten["einbau_datum"] and daten["einbau_datum"] > erste_wartung["datum"]:
+            fehler.append("Das Einbaudatum liegt nach der ersten Wartung.")
+    if fehler:
+        for meldung in fehler:
+            flash(meldung, "danger")
+        return komponente_formular_anzeigen(
+            velo, request.form, "bearbeiten", status=400
+        )
+
+    # Ohne Wartung beginnt die Zählung beim Einbau und wandert mit ihm mit
+    if hat_wartungen:
+        letzte_wartung_datum = komponente["letzte_wartung_datum"]
+        letzte_wartung_km = komponente["letzte_wartung_km"]
+    else:
+        letzte_wartung_datum = daten["einbau_datum"]
+        letzte_wartung_km = daten["einbau_km"]
+
+    db.execute(
+        """UPDATE komponente SET
+               bezeichnung = ?, kategorie = ?, einbau_datum = ?, einbau_km = ?,
+               intervall_km = ?, intervall_tage = ?, letzte_wartung_datum = ?,
+               letzte_wartung_km = ?, anleitung_url = ?, checkliste = ?
+           WHERE id = ?""",
+        (
+            daten["bezeichnung"],
+            daten["kategorie"],
+            daten["einbau_datum"],
+            daten["einbau_km"],
+            daten["intervall_km"],
+            daten["intervall_tage"],
+            letzte_wartung_datum,
+            letzte_wartung_km,
+            daten["anleitung_url"],
+            daten["checkliste"],
+            komponente_id,
+        ),
     )
+    db.commit()
+    flash(f"Komponente «{daten['bezeichnung']}» gespeichert.", "success")
     return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
 
 

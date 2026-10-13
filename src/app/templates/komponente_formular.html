@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block titel %}{{ 'Komponente tauschen' if modus == 'tauschen' else 'Komponente hinzufügen' }}{% endblock %}
+{% block titel %}{% if modus == 'tauschen' %}Komponente tauschen{% elif modus == 'bearbeiten' %}Komponente bearbeiten{% else %}Komponente hinzufügen{% endif %}{% endblock %}
 
 {% block inhalt %}
 <p class="mb-1"><a href="{{ url_for('velos.velo_detail', velo_id=velo.id) }}">← {{ velo.name }}</a></p>
@@ -8,6 +8,10 @@
 <h1 class="h3">Komponente tauschen</h1>
 <p class="text-body-secondary">«{{ alt.bezeichnung }}» wird ausgebaut und bleibt im Verlauf sichtbar.
     Erfasse hier die neue Komponente.</p>
+{% elif modus == 'bearbeiten' %}
+<h1 class="h3">Komponente bearbeiten</h1>
+<p class="text-body-secondary">Korrigiere hier falsche Angaben. Solange noch keine Wartung erfasst ist,
+    beginnt die Zählung bis zur nächsten Wartung beim Einbau.</p>
 {% else %}
 <h1 class="h3">Komponente hinzufügen</h1>
 {% endif %}
@@ -60,7 +64,7 @@
         </div>
     </div>
     <div class="mt-4 d-flex gap-2">
-        <button class="btn btn-primary">{{ 'Tauschen' if modus == 'tauschen' else 'Hinzufügen' }}</button>
+        <button class="btn btn-primary">{% if modus == 'tauschen' %}Tauschen{% elif modus == 'bearbeiten' %}Speichern{% else %}Hinzufügen{% endif %}</button>
         <a class="btn btn-outline-secondary" href="{{ url_for('velos.velo_detail', velo_id=velo.id) }}">Abbrechen</a>
     </div>
 </form>
