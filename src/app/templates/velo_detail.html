@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% from "_status.html" import badge, rest %}
+
+{% block titel %}{{ velo.name }}{% endblock %}
+
+{% block inhalt %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h3 mb-0">{{ velo.name }}</h1>
+        <p class="text-body-secondary mb-0">{{ velo.typ or 'Velo' }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('velos.velo_bearbeiten', velo_id=velo.id) }}">Bearbeiten</a>
+        <form method="post" action="{{ url_for('velos.velo_loeschen', velo_id=velo.id) }}"
+            onsubmit="return confirm('Velo mit allen Komponenten und Wartungen löschen?')">
+            <button class="btn btn-outline-danger btn-sm">Löschen</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 text-body-secondary">Kilometerstand</h2>
+                <p class="fs-3 fw-semibold mb-3">{{ velo.km_stand | km }} km</p>
+                <form method="post" action="{{ url_for('velos.kilometer_nachfuehren', velo_id=velo.id) }}"
+                    class="d-flex gap-2">
+                    <label class="visually-hidden" for="km_neu">Neuer Kilometerstand</label>
+                    <input class="form-control" id="km_neu" name="km_stand" type="number" min="{{ velo.km_stand }}"
+                        value="{{ velo.km_stand }}" required>
+                    <button class="btn btn-primary text-nowrap">Nachführen</button>
+                </form>
+                {% if velo.strava_gear_id %}
+                <p class="small text-body-secondary mt-2 mb-0">Mit Strava verknüpft</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 text-body-secondary">Daten</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Rahmennummer</dt>
+                    <dd class="col-sm-8">{{ velo.rahmennummer or '–' }}</dd>
+                    <dt class="col-sm-4">Grösse</dt>
+                    <dd class="col-sm-8">{{ velo.groesse or '–' }}</dd>
+                    <dt class="col-sm-4">Gewicht</dt>
+                    <dd class="col-sm-8">{{ '%.2f kg' | format(velo.gewicht_kg) if velo.gewicht_kg is not none else '–' }}</dd>
+                    <dt class="col-sm-4">Preis</dt>
+                    <dd class="col-sm-8">{{ 'CHF %.2f' | format(velo.preis_chf) if velo.preis_chf is not none else '–' }}</dd>
+                    <dt class="col-sm-4">Erfasst am</dt>
+                    <dd class="col-sm-8">{{ velo.erstellt_am }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="h4 mb-0">Komponenten</h2>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('velos.komponente_neu', velo_id=velo.id) }}">+ Komponente</a>
+</div>
+
+{% if not komponenten %}
+<p class="text-body-secondary">Noch keine Komponenten. Füge z.B. Kette, Reifen oder Zubehör hinzu.</p>
+{% else %}
+<div class="table-responsive mb-4">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Komponente</th>
+                <th>Status</th>
+                <th>Intervall</th>
+                <th>Letzte Wartung</th>
+                <th class="text-end">Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for k, f in komponenten %}
+            <tr>
+                <td>
+                    <strong>{{ k.bezeichnung }}</strong><br>
+                    <span class="small text-body-secondary">{{ k.kategorie }} · eingebaut {{ k.einbau_datum }}</span>
+                    {% if k.anleitung_url %}
+                    <br><a class="small" href="{{ k.anleitung_url }}" target="_blank" rel="noopener">Anleitung ↗</a>
+                    {% endif %}
+                </td>
+                <td>{{ badge(f.status) }}<br><span class="small">{{ rest(f) }}</span></td>
+                <td class="small">
+                    {% if k.intervall_km %}{{ k.intervall_km }} km{% endif %}
+                    {% if k.intervall_km and k.intervall_tage %}<br>{% endif %}
+                    {% if k.intervall_tage %}{{ k.intervall_tage }} Tage{% endif %}
+                    {% if not k.intervall_km and not k.intervall_tage %}–{% endif %}
+                </td>
+                <td class="small">{{ k.letzte_wartung_datum }}<br>bei {{ k.letzte_wartung_km }} km</td>
+                <td class="text-end">
+                    <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+                        {% if k.intervall_km or k.intervall_tage %}
+                        <a class="btn btn-success btn-sm"
+                            href="{{ url_for('velos.wartung_erfassen', komponente_id=k.id) }}">Gewartet</a>
+                        {% endif %}
+                        <a class="btn btn-outline-primary btn-sm"
+                            href="{{ url_for('velos.komponente_tauschen', komponente_id=k.id) }}">Tauschen</a>
+                        <form method="post" action="{{ url_for('velos.komponente_ausbauen', komponente_id=k.id) }}"
+                            onsubmit="return confirm('Komponente ohne Ersatz ausbauen?')">
+                            <button class="btn btn-outline-secondary btn-sm">Ausbauen</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <h2 class="h5">Wartungsverlauf</h2>
+        {% if not wartungen %}
+        <p class="text-body-secondary">Noch keine Wartungen erfasst.</p>
+        {% else %}
+        <ul class="list-group">
+            {% for w in wartungen %}
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ w.bezeichnung }}</strong>
+                    <span class="small text-body-secondary">{{ w.datum }} · {{ w.km_stand }} km</span>
+                </div>
+                {% if w.erledigt %}<div class="small">✓ {{ w.erledigt.split('\n') | join(' · ✓ ') }}</div>{% endif %}
+                {% if w.notiz %}<div class="small text-body-secondary">{{ w.notiz }}</div>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    <div class="col-lg-6">
+        <h2 class="h5">Ausgebaute Komponenten</h2>
+        {% if not ausgebaut %}
+        <p class="text-body-secondary">Noch nichts ausgebaut.</p>
+        {% else %}
+        <ul class="list-group">
+            {% for k in ausgebaut %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>{{ k.bezeichnung }} <span class="small text-body-secondary">({{ k.kategorie }})</span></span>
+                <span class="small text-body-secondary">
+                    {{ k.einbau_datum }} – {{ k.ausbau_datum }} · {{ k.ausbau_km - k.einbau_km }} km
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

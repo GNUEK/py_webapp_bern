@@ -7,10 +7,12 @@ COPY README.md ./
 COPY src ./src
 
 RUN pip install --no-cache-dir uv \
-    && uv sync --frozen --no-dev
+    && uv sync --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src"
+# Datenbank in einem eigenen Ordner, damit man ihn als Volume einbinden kann
+ENV DATABASE_PATH="/app/data/velo.db"
 
 EXPOSE 8000
 

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_status.html" import badge %}
+
+{% block inhalt %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Meine Velos</h1>
+    <div class="d-flex gap-2">
+        {% if strava_aktiv %}
+        <form method="post" action="{{ url_for('strava.abgleichen') }}">
+            <button class="btn btn-outline-secondary">Kilometer von Strava holen</button>
+        </form>
+        {% endif %}
+        <a class="btn btn-primary" href="{{ url_for('velos.velo_neu') }}">+ Velo erfassen</a>
+    </div>
+</div>
+
+{% if not eintraege %}
+<div class="card card-body text-center py-5">
+    <p class="mb-3">Noch keine Velos erfasst.</p>
+    <p><a class="btn btn-primary" href="{{ url_for('velos.velo_neu') }}">Erstes Velo erfassen</a></p>
+</div>
+{% else %}
+<div class="row g-3">
+    {% for e in eintraege %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <a class="card h-100 text-decoration-none velo-karte status-{{ e.status }}"
+            href="{{ url_for('velos.velo_detail', velo_id=e.velo.id) }}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h2 class="h5 card-title mb-1">{{ e.velo.name }}</h2>
+                    {{ badge(e.status) }}
+                </div>
+                <p class="text-body-secondary mb-2">{{ e.velo.typ or 'Velo' }}</p>
+                <p class="fs-4 fw-semibold mb-1">{{ e.velo.km_stand | km }} km</p>
+                <p class="small mb-0">
+                    {% if e.anzahl_faellig %}{{ e.anzahl_faellig }} fällig · {% endif %}
+                    {% if e.anzahl_bald %}{{ e.anzahl_bald }} bald fällig · {% endif %}
+                    {{ e.anzahl_komponenten }} Komponenten
+                </p>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

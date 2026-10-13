@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block titel %}{{ 'Velo erfassen' if neu else 'Velo bearbeiten' }}{% endblock %}
+
+{% block inhalt %}
+<h1 class="h3 mb-3">{{ 'Velo erfassen' if neu else 'Velo bearbeiten' }}</h1>
+
+<form method="post" class="card card-body"
+    action="{{ url_for('velos.velo_neu') if neu else url_for('velos.velo_bearbeiten', velo_id=velo.id) }}">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label" for="name">Name *</label>
+            <input class="form-control" id="name" name="name" required maxlength="100"
+                value="{{ velo.name or '' }}" placeholder="z.B. Gravel">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="typ">Typ</label>
+            <input class="form-control" id="typ" name="typ" maxlength="100" value="{{ velo.typ or '' }}"
+                placeholder="Rennvelo, Mountainbike, …">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="km_stand">Kilometerstand *</label>
+            <input class="form-control" id="km_stand" name="km_stand" type="number" min="{{ 0 if neu else velo.km_stand }}"
+                required value="{{ velo.km_stand if velo.km_stand is not none else 0 }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="rahmennummer">Rahmennummer</label>
+            <input class="form-control" id="rahmennummer" name="rahmennummer" maxlength="100"
+                value="{{ velo.rahmennummer or '' }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="groesse">Grösse</label>
+            <input class="form-control" id="groesse" name="groesse" maxlength="20" value="{{ velo.groesse or '' }}"
+                placeholder="z.B. 56 oder M">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="gewicht_kg">Gewicht (kg)</label>
+            <input class="form-control" id="gewicht_kg" name="gewicht_kg" type="number" step="0.01" min="0"
+                value="{{ velo.gewicht_kg if velo.gewicht_kg is not none else '' }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="preis_chf">Preis (CHF)</label>
+            <input class="form-control" id="preis_chf" name="preis_chf" type="number" step="0.05" min="0"
+                value="{{ velo.preis_chf if velo.preis_chf is not none else '' }}">
+        </div>
+        {% if neu %}
+        <div class="col-12">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="standardkomponenten" name="standardkomponenten"
+                    value="1" checked>
+                <label class="form-check-label" for="standardkomponenten">
+                    Standardkomponenten anlegen (Kette, Bremsbeläge, Reifen hinten, Jahresservice)
+                </label>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary">Speichern</button>
+        <a class="btn btn-outline-secondary"
+            href="{{ url_for('velos.uebersicht') if neu else url_for('velos.velo_detail', velo_id=velo.id) }}">Abbrechen</a>
+    </div>
+</form>
+{% endblock %}

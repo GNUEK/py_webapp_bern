@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block titel %}Strava{% endblock %}
+
+{% block inhalt %}
+<h1 class="h3 mb-3">Strava-Anbindung</h1>
+
+{% if not konfiguriert %}
+<div class="card card-body">
+    <p>Strava ist auf diesem Server nicht eingerichtet. Die App funktioniert auch ohne: Kilometer lassen sich
+        auf der Seite eines Velos von Hand nachführen.</p>
+    <p class="mb-0">Zum Einrichten eine App unter <a href="https://www.strava.com/settings/api" target="_blank"
+            rel="noopener">strava.com/settings/api</a> anlegen und die Umgebungsvariablen
+        <code>STRAVA_CLIENT_ID</code> und <code>STRAVA_CLIENT_SECRET</code> setzen (siehe README).</p>
+</div>
+{% elif not verbindung %}
+<div class="card card-body">
+    <p>Verbinde dein Strava-Konto, damit die App die Gesamtkilometer deiner Velos lesen kann.</p>
+    <p class="mb-0"><a class="btn btn-warning" href="{{ url_for('strava.verbinden') }}">Mit Strava verbinden</a></p>
+</div>
+{% else %}
+<div class="card card-body mb-4 d-flex flex-row flex-wrap justify-content-between align-items-center gap-2">
+    <span>Verbunden{% if verbindung.athlet %} als <strong>{{ verbindung.athlet }}</strong>{% endif %}.</span>
+    <div class="d-flex gap-2">
+        <form method="post" action="{{ url_for('strava.abgleichen') }}">
+            <button class="btn btn-primary">Kilometer übernehmen</button>
+        </form>
+        <form method="post" action="{{ url_for('strava.trennen') }}">
+            <button class="btn btn-outline-secondary">Trennen</button>
+        </form>
+    </div>
+</div>
+
+<h2 class="h5">Velos verknüpfen</h2>
+{% if not velos %}
+<p class="text-body-secondary">Erfasse zuerst ein Velo.</p>
+{% elif not strava_velos %}
+<p class="text-body-secondary">In deinem Strava-Profil sind keine Velos hinterlegt.</p>
+{% else %}
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Velo in der App</th>
+                <th>Strava-Velo</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for velo in velos %}
+            <tr>
+                <td>{{ velo.name }} <span class="small text-body-secondary">({{ velo.km_stand }} km)</span></td>
+                <td>
+                    <form method="post" action="{{ url_for('strava.verknuepfen') }}" class="d-flex gap-2"
+                        id="verknuepfen{{ velo.id }}">
+                        <input type="hidden" name="velo_id" value="{{ velo.id }}">
+                        <select class="form-select" name="strava_gear_id" aria-label="Strava-Velo für {{ velo.name }}">
+                            <option value="">– nicht verknüpft –</option>
+                            {% for sv in strava_velos %}
+                            <option value="{{ sv.id }}" {% if velo.strava_gear_id == sv.id %}selected{% endif %}>
+                                {{ sv.name }} ({{ sv.km }} km)</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+                <td><button class="btn btn-outline-primary btn-sm" form="verknuepfen{{ velo.id }}">Speichern</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

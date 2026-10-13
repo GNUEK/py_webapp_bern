@@ -1,0 +1,21 @@
+{# Wiederverwendbare Anzeige eines Wartungsstatus als farbiges Badge #}
+{% macro badge(status) -%}
+{% if status == 'faellig' %}<span class="badge text-bg-danger">fällig</span>
+{% elif status == 'bald' %}<span class="badge text-bg-warning">bald fällig</span>
+{% elif status == 'ok' %}<span class="badge text-bg-success">ok</span>
+{% else %}<span class="badge text-bg-secondary">kein Intervall</span>
+{% endif %}
+{%- endmacro %}
+
+{% macro rest(faelligkeit) -%}
+{% set teile = [] %}
+{% if faelligkeit.rest_km is not none %}
+{% if faelligkeit.rest_km > 0 %}{% set _ = teile.append('noch ' ~ faelligkeit.rest_km ~ ' km') %}
+{% else %}{% set _ = teile.append((-faelligkeit.rest_km) ~ ' km überfällig') %}{% endif %}
+{% endif %}
+{% if faelligkeit.rest_tage is not none %}
+{% if faelligkeit.rest_tage > 0 %}{% set _ = teile.append('noch ' ~ faelligkeit.rest_tage ~ ' Tage') %}
+{% else %}{% set _ = teile.append((-faelligkeit.rest_tage) ~ ' Tage überfällig') %}{% endif %}
+{% endif %}
+{{ teile | join(' · ') }}
+{%- endmacro %}

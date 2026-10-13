@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block titel %}{{ 'Komponente tauschen' if modus == 'tauschen' else 'Komponente hinzufügen' }}{% endblock %}
+
+{% block inhalt %}
+<p class="mb-1"><a href="{{ url_for('velos.velo_detail', velo_id=velo.id) }}">← {{ velo.name }}</a></p>
+{% if modus == 'tauschen' %}
+<h1 class="h3">Komponente tauschen</h1>
+<p class="text-body-secondary">«{{ alt.bezeichnung }}» wird ausgebaut und bleibt im Verlauf sichtbar.
+    Erfasse hier die neue Komponente.</p>
+{% else %}
+<h1 class="h3">Komponente hinzufügen</h1>
+{% endif %}
+
+<form method="post" class="card card-body">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label" for="bezeichnung">Bezeichnung *</label>
+            <input class="form-control" id="bezeichnung" name="bezeichnung" required maxlength="100"
+                value="{{ komponente.bezeichnung or '' }}" placeholder="z.B. Shimano 105 Kette">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="kategorie">Kategorie *</label>
+            <select class="form-select" id="kategorie" name="kategorie" required>
+                {% for kat in kategorien %}
+                <option {% if komponente.kategorie == kat %}selected{% endif %}>{{ kat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="einbau_datum">Einbaudatum *</label>
+            <input class="form-control" id="einbau_datum" name="einbau_datum" type="date" required
+                value="{{ komponente.einbau_datum or '' }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="einbau_km">Kilometerstand beim Einbau *</label>
+            <input class="form-control" id="einbau_km" name="einbau_km" type="number" min="0" max="{{ velo.km_stand }}"
+                required value="{{ komponente.einbau_km if komponente.einbau_km is not none else '' }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="intervall_km">Wartung alle … km</label>
+            <input class="form-control" id="intervall_km" name="intervall_km" type="number" min="1"
+                value="{{ komponente.intervall_km or '' }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="intervall_tage">Wartung alle … Tage</label>
+            <input class="form-control" id="intervall_tage" name="intervall_tage" type="number" min="1"
+                value="{{ komponente.intervall_tage or '' }}">
+            <div class="form-text">Beide Felder leer lassen für Zubehör ohne Wartung (z.B. Flaschenhalter).</div>
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="anleitung_url">Link zur Anleitung</label>
+            <input class="form-control" id="anleitung_url" name="anleitung_url" type="url"
+                value="{{ komponente.anleitung_url or '' }}" placeholder="https://www.youtube.com/…">
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="checkliste">Wartungscheckliste (ein Punkt pro Zeile)</label>
+            <textarea class="form-control" id="checkliste" name="checkliste" rows="4"
+                maxlength="1000">{{ komponente.checkliste or '' }}</textarea>
+        </div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary">{{ 'Tauschen' if modus == 'tauschen' else 'Hinzufügen' }}</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('velos.velo_detail', velo_id=velo.id) }}">Abbrechen</a>
+    </div>
+</form>
+{% endblock %}

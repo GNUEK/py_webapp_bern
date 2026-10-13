@@ -1,0 +1,22 @@
+/* Kleine Ergänzungen zu Bootstrap */
+
+.velo-karte {
+    border-left-width: 6px;
+    transition: box-shadow 0.15s;
+}
+
+.velo-karte:hover {
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+}
+
+.velo-karte.status-faellig {
+    border-left-color: var(--bs-danger);
+}
+
+.velo-karte.status-bald {
+    border-left-color: var(--bs-warning);
+}
+
+.velo-karte.status-ok {
+    border-left-color: var(--bs-success);
+}

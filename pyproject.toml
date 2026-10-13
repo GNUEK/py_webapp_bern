@@ -1,12 +1,14 @@
 [project]
-name = "py-webapp-template"
+name = "velo-wartungslogbuch"
 version = "0.1.0"
-description = "Web application project for the software development module"
+description = "Velo-Wartungslogbuch: Velos und Komponenten erfassen, fällige Wartungen sehen"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "flask>=3.1",
     "gunicorn>=26.0.0",
     "python-dotenv>=1.0",
+    "requests>=2.32",
     "waitress>=3.0.2 ; sys_platform == 'win32'",
 ]
 
