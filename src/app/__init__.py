@@ -26,9 +26,6 @@ def create_app(test_config: dict | None = None) -> Flask:
     flask_app = Flask(__name__)
     flask_app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", "nur-fuer-lokale-entwicklung"),
-        # Cookie nicht an Anfragen hängen, die eine fremde Seite per Formular
-        # auslöst. Die Rückleitung von Strava (normaler Link) klappt weiterhin.
-        SESSION_COOKIE_SAMESITE="Lax",
         DATABASE=os.environ.get(
             "DATABASE_PATH", str(PROJEKT_ORDNER / "instance" / "velo.db")
         ),

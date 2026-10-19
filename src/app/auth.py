@@ -7,9 +7,6 @@ Die Prüfung läuft im Backend vor jeder Anfrage (``login_erzwingen``), nicht
 in den einzelnen Seiten. So kann eine neue Seite nicht vergessen werden.
 """
 
-import hmac
-from urllib.parse import urlsplit
-
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 bp = Blueprint("auth", __name__)
@@ -36,10 +33,9 @@ def sicheres_ziel(ziel: str | None) -> str:
     Sonst könnte ein präparierter Link wie ``/login?next=https://boese.example``
     nach dem Login auf eine fremde Seite führen ("Open Redirect").
     """
-    if ziel and ziel.startswith("/") and "\\" not in ziel:
-        teile = urlsplit(ziel)
-        if not teile.scheme and not teile.netloc:
-            return ziel
+    # Nur Pfade wie "/velos/1". "//..." und "/\..." lesen Browser als fremde Seite.
+    if ziel and ziel.startswith("/") and not ziel.startswith(("//", "/\\")):
+        return ziel
     return url_for("velos.uebersicht")
 
 
@@ -51,8 +47,7 @@ def login():
             return redirect(ziel)
         return render_template("login.html", ziel=ziel)
 
-    eingabe = request.form.get("passwort", "")
-    if not hmac.compare_digest(eingabe.encode(), PASSWORT.encode()):
+    if request.form.get("passwort") != PASSWORT:
         flash("Falsches Passwort.", "danger")
         return render_template("login.html", ziel=ziel), 401
 
