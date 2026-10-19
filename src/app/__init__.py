@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import db, strava, views
+from . import auth, db, strava, views
 
 PROJEKT_ORDNER = Path(__file__).resolve().parents[2]
 
@@ -42,6 +42,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     db.init_db(flask_app.config["DATABASE"])
     flask_app.teardown_appcontext(db.close_db)
 
+    # Zentrale Login-Prüfung vor jeder Anfrage, für alle Seiten
+    flask_app.before_request(auth.login_erzwingen)
+
+    flask_app.register_blueprint(auth.bp)
     flask_app.register_blueprint(views.bp)
     flask_app.register_blueprint(strava.bp)
 

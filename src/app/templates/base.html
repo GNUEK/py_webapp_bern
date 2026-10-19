@@ -13,11 +13,16 @@
     <nav class="navbar navbar-expand bg-dark navbar-dark mb-4">
         <div class="container">
             <a class="navbar-brand fw-semibold" href="{{ url_for('velos.uebersicht') }}">🚲 Velo-Wartungslogbuch</a>
-            <div class="navbar-nav">
+            {% if session.angemeldet %}
+            <div class="navbar-nav align-items-center">
                 <a class="nav-link" href="{{ url_for('velos.uebersicht') }}">Übersicht</a>
                 <a class="nav-link" href="{{ url_for('velos.velo_neu') }}">Velo erfassen</a>
                 <a class="nav-link" href="{{ url_for('strava.strava_seite') }}">Strava</a>
+                <form method="post" action="{{ url_for('auth.logout') }}">
+                    <button class="btn btn-link nav-link" type="submit">Abmelden</button>
+                </form>
             </div>
+            {% endif %}
         </div>
     </nav>
 
