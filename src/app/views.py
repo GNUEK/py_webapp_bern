@@ -254,10 +254,29 @@ def kilometer_nachfuehren(velo_id: int):
     fehler = f.Fehlerliste()
     neu = f.ganzzahl(request.form, "km_stand", fehler, pflicht=True)
     if neu is not None and neu < velo["km_stand"]:
-        fehler.append(
-            f"Der neue Kilometerstand ({neu}) ist kleiner als der bisherige "
-            f"({velo['km_stand']})."
-        )
+        if not request.form.get("korrigieren"):
+            fehler.append(
+                f"Der neue Kilometerstand ({neu}) ist kleiner als der bisherige "
+                f"({velo['km_stand']}). Für einen Tippfehler «Kilometerstand "
+                "korrigieren» ankreuzen."
+            )
+        else:
+            # Nicht unter den Stand, bei dem eine aktive Komponente eingebaut
+            # oder gewartet wurde (letzte Wartung liegt nie vor dem Einbau)
+            minimum = (
+                get_db()
+                .execute(
+                    "SELECT MAX(letzte_wartung_km) FROM komponente"
+                    " WHERE velo_id = ? AND aktiv = 1",
+                    (velo_id,),
+                )
+                .fetchone()[0]
+            )
+            if minimum is not None and neu < minimum:
+                fehler.append(
+                    f"Der Kilometerstand kann nicht unter {minimum} km sinken: "
+                    "Eine Komponente wurde bei diesem Stand eingebaut oder gewartet."
+                )
     if fehler:
         for meldung in fehler:
             flash(meldung, "danger")

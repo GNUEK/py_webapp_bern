@@ -80,6 +80,33 @@ def test_kilometer_koennen_nicht_sinken(client, app):
     assert velo(app)["km_stand"] == 1000
 
 
+# Issue #3: Kilometerstand nach unten korrigieren ---------------------------
+
+
+def test_kilometer_korrigieren_mit_bestaetigung(client, app):
+    erfasse_velo(client, km_stand=12000)  # Tippfehler statt 1200
+    client.post("/velos/1/kilometer", data={"km_stand": "1200", "korrigieren": "1"})
+    assert velo(app)["km_stand"] == 1200
+
+
+def test_kilometer_korrigieren_bis_zur_komponente(client, app):
+    erfasse_velo(client, km_stand=5000)
+    erfasse_komponente(client, einbau_km="3000")
+
+    # Genau beim Einbau-Stand ist erlaubt
+    client.post("/velos/1/kilometer", data={"km_stand": "3000", "korrigieren": "1"})
+    assert velo(app)["km_stand"] == 3000
+
+    # Darunter nicht
+    antwort = client.post(
+        "/velos/1/kilometer",
+        data={"km_stand": "2999", "korrigieren": "1"},
+        follow_redirects=True,
+    )
+    assert "nicht unter 3000 km sinken" in antwort.text
+    assert velo(app)["km_stand"] == 3000
+
+
 def test_wartung_setzt_zaehler_zurueck(client, app):
     erfasse_velo(client, km_stand=1000)
     erfasse_komponente(
