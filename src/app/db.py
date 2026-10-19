@@ -34,3 +34,8 @@ def init_db(database_path: str) -> None:
     Path(database_path).parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(database_path) as connection:
         connection.executescript(SCHEMA_FILE.read_text(encoding="utf-8"))
+        # Ältere Datenbanken haben die Spalte "modell" noch nicht (Issue #6).
+        # CREATE TABLE IF NOT EXISTS ergänzt keine Spalten, darum von Hand.
+        spalten = [s[1] for s in connection.execute("PRAGMA table_info(komponente)")]
+        if "modell" not in spalten:
+            connection.execute("ALTER TABLE komponente ADD COLUMN modell TEXT")

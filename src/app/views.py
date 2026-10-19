@@ -81,13 +81,14 @@ def aktive_komponenten_mit_status(velo):
 def speichere_komponente(velo_id: int, daten: dict) -> int:
     cursor = get_db().execute(
         """INSERT INTO komponente (
-               velo_id, bezeichnung, kategorie, einbau_datum, einbau_km,
+               velo_id, bezeichnung, modell, kategorie, einbau_datum, einbau_km,
                intervall_km, intervall_tage, letzte_wartung_datum,
                letzte_wartung_km, anleitung_url, checkliste)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             velo_id,
             daten["bezeichnung"],
+            daten.get("modell"),  # Standardkomponenten haben kein Modell
             daten["kategorie"],
             daten["einbau_datum"],
             daten["einbau_km"],
@@ -277,6 +278,7 @@ def komponente_aus_formular(fehler: f.Fehlerliste, velo) -> dict:
     form = request.form
     daten = {
         "bezeichnung": f.text(form, "bezeichnung", fehler, pflicht=True),
+        "modell": f.text(form, "modell", fehler),
         "kategorie": f.kategorie(form, fehler),
         "einbau_datum": f.datum(form, "einbau_datum", fehler, heute()),
         "einbau_km": f.ganzzahl(form, "einbau_km", fehler, pflicht=True),
@@ -417,12 +419,14 @@ def komponente_bearbeiten(komponente_id: int):
 
     db.execute(
         """UPDATE komponente SET
-               bezeichnung = ?, kategorie = ?, einbau_datum = ?, einbau_km = ?,
-               intervall_km = ?, intervall_tage = ?, letzte_wartung_datum = ?,
-               letzte_wartung_km = ?, anleitung_url = ?, checkliste = ?
+               bezeichnung = ?, modell = ?, kategorie = ?, einbau_datum = ?,
+               einbau_km = ?, intervall_km = ?, intervall_tage = ?,
+               letzte_wartung_datum = ?, letzte_wartung_km = ?,
+               anleitung_url = ?, checkliste = ?
            WHERE id = ?""",
         (
             daten["bezeichnung"],
+            daten["modell"],
             daten["kategorie"],
             daten["einbau_datum"],
             daten["einbau_km"],
