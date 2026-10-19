@@ -3,6 +3,8 @@
 Jeder Test bekommt eine eigene, leere Datenbank in einem temporären Ordner.
 Das heutige Datum ist fest auf den 12.10.2026 gesetzt, damit Tests mit
 Datumsberechnungen jeden Tag gleich laufen.
+
+Der Fixture ``client`` ist bereits angemeldet, ``anonym`` nicht.
 """
 
 from datetime import date
@@ -10,6 +12,7 @@ from datetime import date
 import pytest
 
 from app import create_app
+from app.auth import PASSWORT
 
 HEUTE = date(2026, 10, 12)
 
@@ -28,8 +31,24 @@ def app(tmp_path):
 
 
 @pytest.fixture
-def client(app):
+def anonym(app):
+    """Testclient ohne Anmeldung."""
     return app.test_client()
+
+
+@pytest.fixture
+def client(app):
+    """Testclient, der bereits angemeldet ist."""
+    angemeldet = app.test_client()
+    melde_an(angemeldet)
+    return angemeldet
+
+
+def melde_an(client, passwort=PASSWORT, next=None):
+    daten = {"passwort": passwort}
+    if next:
+        daten["next"] = next
+    return client.post("/login", data=daten)
 
 
 def erfasse_velo(client, name="Gravel", km_stand=1000, standardkomponenten=False):

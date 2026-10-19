@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import db, strava, views
+from . import auth, db, strava, views
 
 PROJEKT_ORDNER = Path(__file__).resolve().parents[2]
 
@@ -26,6 +26,9 @@ def create_app(test_config: dict | None = None) -> Flask:
     flask_app = Flask(__name__)
     flask_app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", "nur-fuer-lokale-entwicklung"),
+        # Cookie nicht an Anfragen hängen, die eine fremde Seite per Formular
+        # auslöst. Die Rückleitung von Strava (normaler Link) klappt weiterhin.
+        SESSION_COOKIE_SAMESITE="Lax",
         DATABASE=os.environ.get(
             "DATABASE_PATH", str(PROJEKT_ORDNER / "instance" / "velo.db")
         ),
@@ -42,6 +45,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     db.init_db(flask_app.config["DATABASE"])
     flask_app.teardown_appcontext(db.close_db)
 
+    # Zentrale Login-Prüfung vor jeder Anfrage, für alle Seiten
+    flask_app.before_request(auth.login_erzwingen)
+
+    flask_app.register_blueprint(auth.bp)
     flask_app.register_blueprint(views.bp)
     flask_app.register_blueprint(strava.bp)
 
