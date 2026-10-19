@@ -24,12 +24,18 @@
             <div class="card-body">
                 <h2 class="h6 text-body-secondary">Kilometerstand</h2>
                 <p class="fs-3 fw-semibold mb-3">{{ velo.km_stand | km }} km</p>
-                <form method="post" action="{{ url_for('velos.kilometer_nachfuehren', velo_id=velo.id) }}"
-                    class="d-flex gap-2">
-                    <label class="visually-hidden" for="km_neu">Neuer Kilometerstand</label>
-                    <input class="form-control" id="km_neu" name="km_stand" type="number" min="{{ velo.km_stand }}"
-                        value="{{ velo.km_stand }}" required>
-                    <button class="btn btn-primary text-nowrap">Nachführen</button>
+                <form method="post" action="{{ url_for('velos.kilometer_nachfuehren', velo_id=velo.id) }}">
+                    <div class="d-flex gap-2">
+                        <label class="visually-hidden" for="km_neu">Neuer Kilometerstand</label>
+                        <input class="form-control" id="km_neu" name="km_stand" type="number" min="0"
+                            value="{{ velo.km_stand }}" required>
+                        <button class="btn btn-primary text-nowrap">Nachführen</button>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="korrigieren" name="korrigieren" value="1">
+                        <label class="form-check-label small" for="korrigieren">Kilometerstand korrigieren
+                            (darf kleiner werden, z.B. nach Tippfehler)</label>
+                    </div>
                 </form>
                 {% if velo.strava_gear_id %}
                 <p class="small text-body-secondary mt-2 mb-0">Mit Strava verknüpft</p>
