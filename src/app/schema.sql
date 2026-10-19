@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS komponente (
     id                    INTEGER PRIMARY KEY AUTOINCREMENT,
     velo_id               INTEGER NOT NULL REFERENCES velo(id) ON DELETE CASCADE,
     bezeichnung           TEXT    NOT NULL,
+    modell                TEXT,
     kategorie             TEXT    NOT NULL,
     einbau_datum          TEXT    NOT NULL,
     einbau_km             INTEGER NOT NULL CHECK (einbau_km >= 0),

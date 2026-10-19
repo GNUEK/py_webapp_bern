@@ -82,6 +82,7 @@
             <tr>
                 <td>
                     <strong>{{ k.bezeichnung }}</strong><br>
+                    {% if k.modell %}<span class="small">Modellnr. {{ k.modell }}</span><br>{% endif %}
                     <span class="small text-body-secondary">{{ k.kategorie }} · eingebaut {{ k.einbau_datum }}</span>
                     {% if k.anleitung_url %}
                     <br><a class="small" href="{{ k.anleitung_url }}" target="_blank" rel="noopener">Anleitung ↗</a>

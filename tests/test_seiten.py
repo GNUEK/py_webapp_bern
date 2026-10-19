@@ -260,3 +260,27 @@ def test_velo_loeschen_entfernt_komponenten(client, app):
     client.post("/velos/1/loeschen")
     assert velo(app) is None
     assert komponenten(app) == []
+
+
+# Issue #6: Modellnr. ---------------------------------------------------------
+
+
+def test_modellnr_erfassen_anzeigen_und_beim_tauschen_vorschlagen(client):
+    erfasse_velo(client)
+    erfasse_komponente(client, modell="Shimano CN-HG701-11")
+    assert "Modellnr. Shimano CN-HG701-11" in client.get("/velos/1").text
+    assert "Shimano CN-HG701-11" in client.get("/komponenten/1/tauschen").text
+
+
+def test_alte_datenbank_bekommt_spalte_modell(tmp_path):
+    import sqlite3
+
+    from app.db import init_db
+
+    pfad = str(tmp_path / "alt.db")
+    with sqlite3.connect(pfad) as alt:
+        alt.execute("CREATE TABLE komponente (id INTEGER PRIMARY KEY)")
+    init_db(pfad)
+    with sqlite3.connect(pfad) as neu:
+        spalten = [s[1] for s in neu.execute("PRAGMA table_info(komponente)")]
+    assert "modell" in spalten

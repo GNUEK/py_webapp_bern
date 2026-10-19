@@ -24,6 +24,12 @@
                 value="{{ komponente.bezeichnung or '' }}" placeholder="z.B. Shimano 105 Kette">
         </div>
         <div class="col-md-6">
+            <label class="form-label" for="modell">Modellnr.</label>
+            <input class="form-control" id="modell" name="modell" maxlength="100"
+                value="{{ komponente.modell or '' }}" placeholder="z.B. Shimano CN-HG701-11">
+            <div class="form-text">Für die Nachbestellung.</div>
+        </div>
+        <div class="col-md-6">
             <label class="form-label" for="kategorie">Kategorie *</label>
             <select class="form-select" id="kategorie" name="kategorie" required>
                 {% for kat in kategorien %}
