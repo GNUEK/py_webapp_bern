@@ -311,3 +311,171 @@ def test_alte_datenbank_bekommt_spalte_modell(tmp_path):
     with sqlite3.connect(pfad) as neu:
         spalten = [s[1] for s in neu.execute("PRAGMA table_info(komponente)")]
     assert "modell" in spalten
+
+
+# Issue #4: Rückgängig machen ------------------------------------------------
+
+
+def warte(client, datum, km_stand, komponente_id=1):
+    return client.post(
+        f"/komponenten/{komponente_id}/wartung",
+        data={"datum": datum, "km_stand": str(km_stand)},
+    )
+
+
+def tausche(client, komponente_id=1, bezeichnung="Neue Kette", einbau_km="3200"):
+    return client.post(
+        f"/komponenten/{komponente_id}/tauschen",
+        data={
+            "bezeichnung": bezeichnung,
+            "kategorie": "Kette",
+            "einbau_datum": "2026-10-12",
+            "einbau_km": einbau_km,
+            "intervall_km": "3000",
+        },
+    )
+
+
+def anzahl_wartungen(app):
+    with app.app_context():
+        return get_db().execute("SELECT COUNT(*) FROM wartung").fetchone()[0]
+
+
+def test_letzte_wartung_loeschen_stellt_vorherige_her(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, einbau_km="0", einbau_datum="2026-01-01")
+    warte(client, "2026-06-01", 500)
+    warte(client, "2026-10-01", 800)
+
+    client.post("/wartungen/2/loeschen")
+    komponente = komponenten(app)[0]
+    assert komponente["letzte_wartung_km"] == 500
+    assert komponente["letzte_wartung_datum"] == "2026-06-01"
+
+    # Ohne Wartung zählt wieder der Einbau
+    client.post("/wartungen/1/loeschen")
+    komponente = komponenten(app)[0]
+    assert komponente["letzte_wartung_km"] == 0
+    assert komponente["letzte_wartung_datum"] == "2026-01-01"
+    assert anzahl_wartungen(app) == 0
+
+
+def test_nur_letzte_wartung_kann_geloescht_werden(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, einbau_km="0")
+    warte(client, "2026-06-01", 500)
+    warte(client, "2026-10-01", 800)
+
+    antwort = client.post("/wartungen/1/loeschen", follow_redirects=True)
+    assert "Nur die letzte Wartung" in antwort.text
+    assert anzahl_wartungen(app) == 2
+    assert komponenten(app)[0]["letzte_wartung_km"] == 800
+
+    # Die Seite bietet das Löschen nur bei der letzten Wartung an
+    assert client.get("/velos/1").text.count('/loeschen"') == 2  # Velo + Wartung
+
+
+def test_unbekannte_wartung_gibt_404(client):
+    assert client.post("/wartungen/99/loeschen").status_code == 404
+
+
+def test_tausch_rueckgaengig(client, app):
+    erfasse_velo(client, km_stand=3200)
+    erfasse_komponente(client, bezeichnung="Alte Kette", einbau_km="0")
+    tausche(client)
+    assert "Tausch rückgängig" in client.get("/velos/1").text
+
+    client.post("/komponenten/2/tausch-rueckgaengig")
+    aktiv = komponenten(app, aktiv=1)
+    assert [k["bezeichnung"] for k in aktiv] == ["Alte Kette"]
+    assert aktiv[0]["ausbau_datum"] is None
+    assert aktiv[0]["ausbau_km"] is None
+    assert komponenten(app, aktiv=0) == []  # Neue Kette ist weg
+
+
+def test_tausch_mit_wartung_erst_nach_loeschen_rueckgaengig(client, app):
+    erfasse_velo(client, km_stand=3200)
+    erfasse_komponente(client, bezeichnung="Alte Kette", einbau_km="0")
+    tausche(client)
+    warte(client, "2026-10-12", 3200, komponente_id=2)
+
+    antwort = client.post("/komponenten/2/tausch-rueckgaengig", follow_redirects=True)
+    assert "Zuerst diese Wartungen löschen" in antwort.text
+    assert [k["bezeichnung"] for k in komponenten(app)] == ["Neue Kette"]
+
+    client.post("/wartungen/1/loeschen")
+    client.post("/komponenten/2/tausch-rueckgaengig")
+    assert [k["bezeichnung"] for k in komponenten(app)] == ["Alte Kette"]
+
+
+def test_mehrere_tausche_schrittweise_rueckgaengig(client, app):
+    erfasse_velo(client, km_stand=3200)
+    erfasse_komponente(client, bezeichnung="Kette 1", einbau_km="0")
+    tausche(client, 1, "Kette 2")
+    tausche(client, 2, "Kette 3")
+
+    client.post("/komponenten/3/tausch-rueckgaengig")
+    assert [k["bezeichnung"] for k in komponenten(app)] == ["Kette 2"]
+    client.post("/komponenten/2/tausch-rueckgaengig")
+    assert [k["bezeichnung"] for k in komponenten(app)] == ["Kette 1"]
+
+
+def test_ohne_tausch_eingebaut_nicht_rueckgaengig(client, app):
+    erfasse_velo(client)
+    erfasse_komponente(client)
+    assert "Tausch rückgängig" not in client.get("/velos/1").text
+
+    client.post("/komponenten/1/tausch-rueckgaengig")
+    assert len(komponenten(app)) == 1
+
+
+def test_ausbau_rueckgaengig(client, app):
+    erfasse_velo(client)
+    erfasse_komponente(client, bezeichnung="Garmin")
+    client.post("/komponenten/1/ausbauen")
+    assert "Wieder einbauen" in client.get("/velos/1").text
+
+    client.post("/komponenten/1/ausbau-rueckgaengig")
+    komponente = komponenten(app)[0]
+    assert komponente["bezeichnung"] == "Garmin"
+    assert komponente["ausbau_datum"] is None
+    assert komponente["ausbau_km"] is None
+
+
+def test_getauschte_komponente_nicht_einzeln_einbauen(client, app):
+    erfasse_velo(client, km_stand=3200)
+    erfasse_komponente(client, bezeichnung="Alte Kette", einbau_km="0")
+    tausche(client)
+    assert "Wieder einbauen" not in client.get("/velos/1").text
+
+    antwort = client.post("/komponenten/1/ausbau-rueckgaengig", follow_redirects=True)
+    assert "Dafür den Tausch rückgängig machen" in antwort.text
+    assert [k["bezeichnung"] for k in komponenten(app)] == ["Neue Kette"]
+
+
+def test_rueckgaengig_hat_sicherheitsabfrage(client):
+    erfasse_velo(client, km_stand=3200)
+    erfasse_komponente(client, bezeichnung="Kette", einbau_km="0")
+    erfasse_komponente(client, bezeichnung="Garmin", einbau_km="0")
+    warte(client, "2026-10-01", 3000)
+    tausche(client)
+    client.post("/komponenten/2/ausbauen")
+
+    seite = client.get("/velos/1").text
+    assert "confirm('Diese Wartung löschen?" not in seite  # Kette 1 ist ausgebaut
+    assert "confirm('Tausch rückgängig machen?" in seite
+    assert "confirm('Ausbau rückgängig machen" in seite
+
+
+def test_alte_datenbank_bekommt_spalte_vorgaenger(tmp_path):
+    import sqlite3
+
+    from app.db import init_db
+
+    pfad = str(tmp_path / "alt.db")
+    with sqlite3.connect(pfad) as alt:
+        alt.execute("CREATE TABLE komponente (id INTEGER PRIMARY KEY)")
+    init_db(pfad)
+    with sqlite3.connect(pfad) as neu:
+        spalten = [s[1] for s in neu.execute("PRAGMA table_info(komponente)")]
+    assert "vorgaenger_id" in spalten

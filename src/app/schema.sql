@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS komponente (
     checkliste            TEXT,
     aktiv                 INTEGER NOT NULL DEFAULT 1,
     ausbau_datum          TEXT,
-    ausbau_km             INTEGER
+    ausbau_km             INTEGER,
+    -- Bei einem Tausch: die Komponente, die ersetzt wurde
+    vorgaenger_id         INTEGER REFERENCES komponente(id)
 );
 
 CREATE TABLE IF NOT EXISTS wartung (

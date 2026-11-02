@@ -83,8 +83,8 @@ def speichere_komponente(velo_id: int, daten: dict) -> int:
         """INSERT INTO komponente (
                velo_id, bezeichnung, modell, kategorie, einbau_datum, einbau_km,
                intervall_km, intervall_tage, letzte_wartung_datum,
-               letzte_wartung_km, anleitung_url, checkliste)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               letzte_wartung_km, anleitung_url, checkliste, vorgaenger_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             velo_id,
             daten["bezeichnung"],
@@ -98,6 +98,7 @@ def speichere_komponente(velo_id: int, daten: dict) -> int:
             daten["einbau_km"],
             daten["anleitung_url"],
             daten["checkliste"],
+            daten.get("vorgaenger_id"),  # nur beim Tausch gesetzt
         ),
     )
     return cursor.lastrowid
@@ -183,13 +184,20 @@ def velo_neu():
 def velo_detail(velo_id: int):
     velo = lade_velo(velo_id)
     db = get_db()
+    # "ersetzt": ausgebaut durch einen Tausch (sonst ohne Ersatz ausgebaut)
     ausgebaut = db.execute(
-        "SELECT * FROM komponente WHERE velo_id = ? AND aktiv = 0"
-        " ORDER BY ausbau_datum DESC",
+        """SELECT *, EXISTS (SELECT 1 FROM komponente AS neu
+                             WHERE neu.vorgaenger_id = komponente.id) AS ersetzt
+           FROM komponente WHERE velo_id = ? AND aktiv = 0
+           ORDER BY ausbau_datum DESC""",
         (velo_id,),
     ).fetchall()
+    # "ist_letzte": nur die letzte Wartung einer Komponente kann man löschen
     wartungen = db.execute(
-        """SELECT wartung.*, komponente.bezeichnung
+        """SELECT wartung.*, komponente.bezeichnung, komponente.aktiv,
+                  wartung.id = (SELECT MAX(id) FROM wartung AS w
+                                WHERE w.komponente_id = wartung.komponente_id)
+                      AS ist_letzte
            FROM wartung JOIN komponente ON komponente.id = wartung.komponente_id
            WHERE komponente.velo_id = ?
            ORDER BY wartung.datum DESC, wartung.id DESC""",
@@ -380,11 +388,10 @@ def komponente_tauschen(komponente_id: int):
 
     db = get_db()
     db.execute(
-        "UPDATE komponente SET aktiv = 0, ausbau_datum = ?, ausbau_km = ?"
-        " WHERE id = ?",
+        "UPDATE komponente SET aktiv = 0, ausbau_datum = ?, ausbau_km = ? WHERE id = ?",
         (daten["einbau_datum"], daten["einbau_km"], komponente_id),
     )
-    speichere_komponente(velo["id"], daten)
+    speichere_komponente(velo["id"], {**daten, "vorgaenger_id": komponente_id})
     db.commit()
     flash(f"«{alt['bezeichnung']}» ersetzt durch «{daten['bezeichnung']}».", "success")
     return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
@@ -416,8 +423,7 @@ def komponente_bearbeiten(komponente_id: int):
     if hat_wartungen:
         if daten["einbau_km"] is not None and daten["einbau_km"] > erste_wartung["km"]:
             fehler.append(
-                "Der Kilometerstand beim Einbau ist grösser als bei der "
-                "ersten Wartung."
+                "Der Kilometerstand beim Einbau ist grösser als bei der ersten Wartung."
             )
         if daten["einbau_datum"] and daten["einbau_datum"] > erste_wartung["datum"]:
             fehler.append("Das Einbaudatum liegt nach der ersten Wartung.")
@@ -470,12 +476,79 @@ def komponente_ausbauen(komponente_id: int):
     velo = lade_velo(komponente["velo_id"])
     db = get_db()
     db.execute(
-        "UPDATE komponente SET aktiv = 0, ausbau_datum = ?, ausbau_km = ?"
-        " WHERE id = ?",
+        "UPDATE komponente SET aktiv = 0, ausbau_datum = ?, ausbau_km = ? WHERE id = ?",
         (heute().isoformat(), velo["km_stand"], komponente_id),
     )
     db.commit()
     flash(f"«{komponente['bezeichnung']}» ausgebaut.", "success")
+    return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
+
+
+# --------------------------------------------------------------------------
+# Rückgängig machen (Issue #4)
+#
+# Es lässt sich immer nur der letzte Schritt rückgängig machen: die letzte
+# Wartung, der letzte Tausch oder der Ausbau einer Komponente. Ein Eintrag
+# mitten im Verlauf bleibt, wie er ist.
+# --------------------------------------------------------------------------
+
+
+@bp.post("/komponenten/<int:komponente_id>/tausch-rueckgaengig")
+def tausch_rueckgaengig(komponente_id: int):
+    """Neue Komponente entfernen und die ersetzte wieder einbauen."""
+    neu = lade_komponente(komponente_id)
+    velo = lade_velo(neu["velo_id"])
+    db = get_db()
+    hat_wartungen = db.execute(
+        "SELECT 1 FROM wartung WHERE komponente_id = ?", (komponente_id,)
+    ).fetchone()
+    if not neu["aktiv"] or neu["vorgaenger_id"] is None:
+        flash("Diese Komponente wurde nicht durch einen Tausch eingebaut.", "warning")
+    elif hat_wartungen:
+        flash(
+            f"«{neu['bezeichnung']}» wurde seit dem Tausch gewartet. "
+            "Zuerst diese Wartungen löschen.",
+            "warning",
+        )
+    else:
+        db.execute("DELETE FROM komponente WHERE id = ?", (komponente_id,))
+        db.execute(
+            "UPDATE komponente SET aktiv = 1, ausbau_datum = NULL, ausbau_km = NULL"
+            " WHERE id = ?",
+            (neu["vorgaenger_id"],),
+        )
+        db.commit()
+        flash(f"Tausch von «{neu['bezeichnung']}» rückgängig gemacht.", "success")
+    return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
+
+
+@bp.post("/komponenten/<int:komponente_id>/ausbau-rueckgaengig")
+def ausbau_rueckgaengig(komponente_id: int):
+    """Eine ohne Ersatz ausgebaute Komponente wieder einbauen."""
+    komponente = lade_komponente(komponente_id)
+    velo = lade_velo(komponente["velo_id"])
+    db = get_db()
+    nachfolger = db.execute(
+        "SELECT bezeichnung FROM komponente WHERE vorgaenger_id = ?",
+        (komponente_id,),
+    ).fetchone()
+    if komponente["aktiv"]:
+        flash("Diese Komponente ist nicht ausgebaut.", "warning")
+    elif nachfolger:
+        flash(
+            f"«{komponente['bezeichnung']}» wurde durch "
+            f"«{nachfolger['bezeichnung']}» ersetzt. "
+            "Dafür den Tausch rückgängig machen.",
+            "warning",
+        )
+    else:
+        db.execute(
+            "UPDATE komponente SET aktiv = 1, ausbau_datum = NULL, ausbau_km = NULL"
+            " WHERE id = ?",
+            (komponente_id,),
+        )
+        db.commit()
+        flash(f"«{komponente['bezeichnung']}» wieder eingebaut.", "success")
     return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
 
 
@@ -540,3 +613,47 @@ def wartung_erfassen(komponente_id: int):
     db.commit()
     flash(f"Wartung von «{komponente['bezeichnung']}» erfasst.", "success")
     return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
+
+
+@bp.post("/wartungen/<int:wartung_id>/loeschen")
+def wartung_loeschen(wartung_id: int):
+    """Letzte Wartung einer Komponente löschen (Issue #4).
+
+    Danach zählt wieder die vorherige Wartung, oder der Einbau, falls es
+    keine mehr gibt.
+    """
+    db = get_db()
+    wartung = db.execute("SELECT * FROM wartung WHERE id = ?", (wartung_id,)).fetchone()
+    if wartung is None:
+        abort(404)
+    komponente = lade_komponente(wartung["komponente_id"])
+    velo_id = komponente["velo_id"]
+    letzte_id = db.execute(
+        "SELECT MAX(id) FROM wartung WHERE komponente_id = ?", (komponente["id"],)
+    ).fetchone()[0]
+
+    if not komponente["aktiv"]:
+        flash("Wartungen ausgebauter Komponenten bleiben im Verlauf.", "warning")
+        return redirect(url_for("velos.velo_detail", velo_id=velo_id))
+    if wartung_id != letzte_id:
+        flash("Nur die letzte Wartung kann gelöscht werden.", "warning")
+        return redirect(url_for("velos.velo_detail", velo_id=velo_id))
+
+    db.execute("DELETE FROM wartung WHERE id = ?", (wartung_id,))
+    vorherige = db.execute(
+        "SELECT datum, km_stand FROM wartung WHERE komponente_id = ?"
+        " ORDER BY id DESC LIMIT 1",
+        (komponente["id"],),
+    ).fetchone()
+    if vorherige:
+        datum, km = vorherige["datum"], vorherige["km_stand"]
+    else:
+        datum, km = komponente["einbau_datum"], komponente["einbau_km"]
+    db.execute(
+        "UPDATE komponente SET letzte_wartung_datum = ?, letzte_wartung_km = ?"
+        " WHERE id = ?",
+        (datum, km, komponente["id"]),
+    )
+    db.commit()
+    flash(f"Letzte Wartung von «{komponente['bezeichnung']}» gelöscht.", "success")
+    return redirect(url_for("velos.velo_detail", velo_id=velo_id))
