@@ -116,6 +116,12 @@
                             onsubmit="return confirm('Komponente ohne Ersatz ausbauen?')">
                             <button class="btn btn-outline-secondary btn-sm">Ausbauen</button>
                         </form>
+                        {% if k.vorgaenger_id %}
+                        <form method="post" action="{{ url_for('velos.tausch_rueckgaengig', komponente_id=k.id) }}"
+                            onsubmit="return confirm('Tausch rückgängig machen? Diese Komponente wird gelöscht und die alte wieder eingebaut.')">
+                            <button class="btn btn-outline-danger btn-sm">Tausch rückgängig</button>
+                        </form>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
@@ -140,6 +146,12 @@
                 </div>
                 {% if w.erledigt %}<div class="small">✓ {{ w.erledigt.split('\n') | join(' · ✓ ') }}</div>{% endif %}
                 {% if w.notiz %}<div class="small text-body-secondary">{{ w.notiz }}</div>{% endif %}
+                {% if w.ist_letzte and w.aktiv %}
+                <form class="mt-1" method="post" action="{{ url_for('velos.wartung_loeschen', wartung_id=w.id) }}"
+                    onsubmit="return confirm('Diese Wartung löschen? Danach gilt wieder die vorherige Wartung.')">
+                    <button class="btn btn-link btn-sm text-danger p-0">Wartung löschen</button>
+                </form>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>
@@ -152,11 +164,19 @@
         {% else %}
         <ul class="list-group">
             {% for k in ausgebaut %}
-            <li class="list-group-item d-flex justify-content-between">
-                <span>{{ k.bezeichnung }} <span class="small text-body-secondary">({{ k.kategorie }})</span></span>
-                <span class="small text-body-secondary">
-                    {{ k.einbau_datum }} – {{ k.ausbau_datum }} · {{ k.ausbau_km - k.einbau_km }} km
-                </span>
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <span>{{ k.bezeichnung }} <span class="small text-body-secondary">({{ k.kategorie }})</span></span>
+                    <span class="small text-body-secondary">
+                        {{ k.einbau_datum }} – {{ k.ausbau_datum }} · {{ k.ausbau_km - k.einbau_km }} km
+                    </span>
+                </div>
+                {% if not k.ersetzt %}
+                <form class="mt-1" method="post" action="{{ url_for('velos.ausbau_rueckgaengig', komponente_id=k.id) }}"
+                    onsubmit="return confirm('Ausbau rückgängig machen und die Komponente wieder einbauen?')">
+                    <button class="btn btn-link btn-sm p-0">Wieder einbauen</button>
+                </form>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>
