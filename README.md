@@ -103,7 +103,7 @@ Einmalig einrichten:
    * Secret `AZURE_WEBAPP_PUBLISH_PROFILE` = Inhalt der heruntergeladenen Datei
    * Variable `AZURE_WEBAPP_NAME` = Name der Web App
 
-Ab dann deployt jeder Push auf `main` automatisch, sofern alle Tests grün
+Ab dann deployt jeder Push auf `master` automatisch, sofern alle Tests grün
 sind. Ohne das Secret läuft nur der Testteil.
 
 ## Lokales Deployment mit Docker

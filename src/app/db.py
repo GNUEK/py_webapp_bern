@@ -41,6 +41,9 @@ def init_db(database_path: str) -> None:
         spalten = [s[1] for s in connection.execute("PRAGMA table_info(komponente)")]
         if "modell" not in spalten:
             connection.execute("ALTER TABLE komponente ADD COLUMN modell TEXT")
+        # Hinweis, wann ein Tausch nötig ist (Issue #5)
+        if "ersatzhinweis" not in spalten:
+            connection.execute("ALTER TABLE komponente ADD COLUMN ersatzhinweis TEXT")
         # Verknüpfung beim Tausch, damit er rückgängig gemacht werden kann (#4)
         if "vorgaenger_id" not in spalten:
             connection.execute(

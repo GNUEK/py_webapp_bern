@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS komponente (
     letzte_wartung_km     INTEGER NOT NULL,
     anleitung_url         TEXT,
     checkliste            TEXT,
-    aktiv                 INTEGER NOT NULL DEFAULT 1,
+    -- Wann ein Tausch statt einer Wartung nötig ist (wird bei der Wartung gezeigt)
+    ersatzhinweis         TEXT,
+    aktiv                INTEGER NOT NULL DEFAULT 1,
     ausbau_datum          TEXT,
     ausbau_km             INTEGER,
     -- Bei einem Tausch: die Komponente, die ersetzt wurde

@@ -83,8 +83,9 @@ def speichere_komponente(velo_id: int, daten: dict) -> int:
         """INSERT INTO komponente (
                velo_id, bezeichnung, modell, kategorie, einbau_datum, einbau_km,
                intervall_km, intervall_tage, letzte_wartung_datum,
-               letzte_wartung_km, anleitung_url, checkliste, vorgaenger_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               letzte_wartung_km, anleitung_url, checkliste, ersatzhinweis,
+               vorgaenger_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             velo_id,
             daten["bezeichnung"],
@@ -98,6 +99,7 @@ def speichere_komponente(velo_id: int, daten: dict) -> int:
             daten["einbau_km"],
             daten["anleitung_url"],
             daten["checkliste"],
+            daten.get("ersatzhinweis"),
             daten.get("vorgaenger_id"),  # nur beim Tausch gesetzt
         ),
     )
@@ -313,6 +315,7 @@ def komponente_aus_formular(fehler: f.Fehlerliste, velo) -> dict:
         "intervall_tage": f.ganzzahl(form, "intervall_tage", fehler, minimum=1),
         "anleitung_url": f.url(form, "anleitung_url", fehler),
         "checkliste": f.text(form, "checkliste", fehler, max_laenge=1000),
+        "ersatzhinweis": f.text(form, "ersatzhinweis", fehler, max_laenge=500),
     }
     if daten["einbau_km"] is not None and daten["einbau_km"] > velo["km_stand"]:
         fehler.append("Der Kilometerstand beim Einbau ist grösser als der aktuelle.")
@@ -447,7 +450,7 @@ def komponente_bearbeiten(komponente_id: int):
                bezeichnung = ?, modell = ?, kategorie = ?, einbau_datum = ?,
                einbau_km = ?, intervall_km = ?, intervall_tage = ?,
                letzte_wartung_datum = ?, letzte_wartung_km = ?,
-               anleitung_url = ?, checkliste = ?
+               anleitung_url = ?, checkliste = ?, ersatzhinweis = ?
            WHERE id = ?""",
         (
             daten["bezeichnung"],
@@ -461,6 +464,7 @@ def komponente_bearbeiten(komponente_id: int):
             letzte_wartung_km,
             daten["anleitung_url"],
             daten["checkliste"],
+            daten["ersatzhinweis"],
             komponente_id,
         ),
     )

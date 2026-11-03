@@ -106,7 +106,7 @@
                     <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
                         {% if k.intervall_km or k.intervall_tage %}
                         <a class="btn btn-success btn-sm"
-                            href="{{ url_for('velos.wartung_erfassen', komponente_id=k.id) }}">Gewartet</a>
+                            href="{{ url_for('velos.wartung_erfassen', komponente_id=k.id) }}">Warten</a>
                         {% endif %}
                         <a class="btn btn-outline-primary btn-sm"
                             href="{{ url_for('velos.komponente_bearbeiten', komponente_id=k.id) }}">Bearbeiten</a>

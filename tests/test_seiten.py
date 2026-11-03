@@ -481,3 +481,72 @@ def test_alte_datenbank_bekommt_spalte_vorgaenger(tmp_path):
     with closing(sqlite3.connect(pfad)) as neu:
         spalten = [s[1] for s in neu.execute("PRAGMA table_info(komponente)")]
     assert "vorgaenger_id" in spalten
+
+
+# Issue #5: Ersatzhinweis bei Verschleissteilen -----------------------------
+
+
+def test_wartungsformular_zeigt_ersatzhinweis_mit_tauschlink(client):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, ersatzhinweis="Tauschen bei weniger als 1 mm")
+
+    seite = client.get("/komponenten/1/wartung").text
+    assert "Tauschen bei weniger als 1 mm" in seite
+    assert "/komponenten/1/tauschen" in seite
+
+
+def test_wartungsformular_ohne_ersatzhinweis_zeigt_keine_box(client):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client)
+
+    seite = client.get("/komponenten/1/wartung").text
+    assert "Stattdessen tauschen" not in seite
+
+
+def test_ersatzhinweis_bearbeiten_und_beim_tausch_uebernehmen(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client)
+    client.post(
+        "/komponenten/1/bearbeiten",
+        data={
+            "bezeichnung": "Kette",
+            "kategorie": "Kette",
+            "einbau_datum": "2026-01-01",
+            "einbau_km": "1000",
+            "intervall_km": "3000",
+            "ersatzhinweis": "Bei 0.5 % Verschleiss tauschen",
+        },
+    )
+    assert komponenten(app)[0]["ersatzhinweis"] == "Bei 0.5 % Verschleiss tauschen"
+
+    # Das Tauschformular schlägt den Hinweis der alten Komponente vor
+    assert "Bei 0.5 % Verschleiss tauschen" in client.get("/komponenten/1/tauschen").text
+
+
+def test_standardkomponenten_haben_ersatzhinweis_fuer_verschleissteile(client, app):
+    erfasse_velo(client, km_stand=800, standardkomponenten=True)
+    hinweise = {k["kategorie"]: k["ersatzhinweis"] for k in komponenten(app)}
+    assert hinweise["Kette"] and hinweise["Bremsbeläge"] and hinweise["Reifen hinten"]
+    assert hinweise["Service"] is None
+
+
+def test_alte_datenbank_bekommt_spalte_ersatzhinweis(tmp_path):
+    import sqlite3
+
+    from app.db import init_db
+
+    pfad = str(tmp_path / "alt.db")
+    verbindung = sqlite3.connect(pfad)
+    verbindung.execute(
+        "CREATE TABLE komponente (id INTEGER PRIMARY KEY, velo_id INTEGER,"
+        " bezeichnung TEXT)"
+    )
+    verbindung.commit()
+    verbindung.close()
+
+    init_db(pfad)
+
+    verbindung = sqlite3.connect(pfad)
+    spalten = [s[1] for s in verbindung.execute("PRAGMA table_info(komponente)")]
+    verbindung.close()
+    assert "ersatzhinweis" in spalten

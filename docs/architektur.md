@@ -31,7 +31,7 @@ flowchart LR
     StravaMod --> DB
     StravaMod -- "HTTPS, OAuth2" --> Strava
     DB --> SQLite
-    GitHub -- "Deploy bei Push auf main" --> Azure
+    GitHub -- "Deploy bei Push auf master" --> Azure
 ```
 
 Die Seiten werden vollständig auf dem Server erzeugt (Jinja-Templates).

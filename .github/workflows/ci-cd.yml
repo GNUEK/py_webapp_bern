@@ -1,10 +1,13 @@
-name: CI
+name: CI/CD
 
-# Testteil aus docs/decisions/0004: Bei jedem Push und Pull Request laufen
-# ruff und pytest. Das Deployment nach Azure kommt später dazu.
+# docs/decisions/0004: Bei jedem Push und Pull Request laufen ruff und pytest.
+# Bei einem Push auf master (und grünen Tests) wird die App auf Azure App
+# Service deployt. Dafür braucht es in GitHub das Secret
+# AZURE_WEBAPP_PUBLISH_PROFILE und die Variable AZURE_WEBAPP_NAME.
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -15,3 +18,22 @@ jobs:
       - run: uv sync
       - run: uv run ruff check .
       - run: uv run pytest
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master' && vars.AZURE_WEBAPP_NAME != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+
+      # Azure installiert die Pakete aus requirements.txt (Oryx-Build)
+      - name: requirements.txt aus uv.lock erzeugen
+        run: uv export --no-dev --no-hashes --no-emit-project --output-file requirements.txt
+
+      - name: Auf Azure App Service deployen
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .
