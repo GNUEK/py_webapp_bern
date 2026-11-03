@@ -301,14 +301,15 @@ def test_modellnr_erfassen_anzeigen_und_beim_tauschen_vorschlagen(client):
 
 def test_alte_datenbank_bekommt_spalte_modell(tmp_path):
     import sqlite3
+    from contextlib import closing
 
     from app.db import init_db
 
     pfad = str(tmp_path / "alt.db")
-    with sqlite3.connect(pfad) as alt:
+    with closing(sqlite3.connect(pfad)) as alt, alt:
         alt.execute("CREATE TABLE komponente (id INTEGER PRIMARY KEY)")
     init_db(pfad)
-    with sqlite3.connect(pfad) as neu:
+    with closing(sqlite3.connect(pfad)) as neu:
         spalten = [s[1] for s in neu.execute("PRAGMA table_info(komponente)")]
     assert "modell" in spalten
 
@@ -469,13 +470,14 @@ def test_rueckgaengig_hat_sicherheitsabfrage(client):
 
 def test_alte_datenbank_bekommt_spalte_vorgaenger(tmp_path):
     import sqlite3
+    from contextlib import closing
 
     from app.db import init_db
 
     pfad = str(tmp_path / "alt.db")
-    with sqlite3.connect(pfad) as alt:
+    with closing(sqlite3.connect(pfad)) as alt, alt:
         alt.execute("CREATE TABLE komponente (id INTEGER PRIMARY KEY)")
     init_db(pfad)
-    with sqlite3.connect(pfad) as neu:
+    with closing(sqlite3.connect(pfad)) as neu:
         spalten = [s[1] for s in neu.execute("PRAGMA table_info(komponente)")]
     assert "vorgaenger_id" in spalten

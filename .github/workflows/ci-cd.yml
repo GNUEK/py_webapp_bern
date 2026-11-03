@@ -1,0 +1,17 @@
+name: CI
+
+# Testteil aus docs/decisions/0004: Bei jedem Push und Pull Request laufen
+# ruff und pytest. Das Deployment nach Azure kommt später dazu.
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run pytest
