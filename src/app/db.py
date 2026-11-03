@@ -5,6 +5,7 @@ Flask merkt sich die Verbindung im Objekt ``g`` (gilt nur für eine Anfrage).
 """
 
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from flask import current_app, g
@@ -32,7 +33,8 @@ def close_db(_exception=None) -> None:
 def init_db(database_path: str) -> None:
     """Legt die Datenbankdatei und alle Tabellen an, falls sie fehlen."""
     Path(database_path).parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(database_path) as connection:
+    # "with connection" speichert nur, schliesst aber nicht: closing() schliesst.
+    with closing(sqlite3.connect(database_path)) as connection, connection:
         connection.executescript(SCHEMA_FILE.read_text(encoding="utf-8"))
         # Ältere Datenbanken haben die Spalte "modell" noch nicht (Issue #6).
         # CREATE TABLE IF NOT EXISTS ergänzt keine Spalten, darum von Hand.
