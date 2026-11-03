@@ -68,6 +68,13 @@
             <textarea class="form-control" id="checkliste" name="checkliste" rows="4"
                 maxlength="1000">{{ komponente.checkliste or '' }}</textarea>
         </div>
+        <div class="col-12">
+            <label class="form-label" for="ersatzhinweis">Ersatzhinweis</label>
+            <textarea class="form-control" id="ersatzhinweis" name="ersatzhinweis" rows="2"
+                maxlength="500">{{ komponente.ersatzhinweis or '' }}</textarea>
+            <div class="form-text">Wann muss die Komponente getauscht statt nur gewartet werden?
+                Der Text erscheint beim Warten.</div>
+        </div>
     </div>
     <div class="mt-4 d-flex gap-2">
         <button class="btn btn-primary">{% if modus == 'tauschen' %}Tauschen{% elif modus == 'bearbeiten' %}Speichern{% else %}Hinzufügen{% endif %}</button>

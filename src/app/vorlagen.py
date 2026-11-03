@@ -19,6 +19,10 @@ STANDARDKOMPONENTEN = [
         "intervall_tage": None,
         "anleitung_url": youtube_suche("GCN how to replace bike chain"),
         "checkliste": "Kettenverschleiss messen\nKette reinigen\nKette ölen",
+        "ersatzhinweis": (
+            "Kette tauschen, wenn die Verschleisslehre 0.5 % (bei 11-fach "
+            "0.75 %) anzeigt."
+        ),
     },
     {
         "bezeichnung": "Bremsbeläge",
@@ -27,6 +31,7 @@ STANDARDKOMPONENTEN = [
         "intervall_tage": None,
         "anleitung_url": youtube_suche("GCN how to replace disc brake pads"),
         "checkliste": "Belagstärke prüfen\nBremsscheibe reinigen\nBremse testen",
+        "ersatzhinweis": "Beläge tauschen, wenn weniger als 1 mm Belag übrig ist.",
     },
     {
         "bezeichnung": "Reifen hinten",
@@ -35,6 +40,10 @@ STANDARDKOMPONENTEN = [
         "intervall_tage": None,
         "anleitung_url": youtube_suche("GCN how to change a tyre"),
         "checkliste": "Profil und Schnitte prüfen\nLuftdruck prüfen",
+        "ersatzhinweis": (
+            "Reifen tauschen, wenn das Profil abgefahren ist, die Karkasse "
+            "sichtbar wird oder tiefe Schnitte vorhanden sind."
+        ),
     },
     {
         "bezeichnung": "Jahresservice",

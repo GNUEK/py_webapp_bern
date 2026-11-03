@@ -9,6 +9,15 @@
 <p><a href="{{ komponente.anleitung_url }}" target="_blank" rel="noopener">Anleitung öffnen ↗</a></p>
 {% endif %}
 
+{% if komponente.ersatzhinweis %}
+<div class="alert alert-warning">
+    <strong>Tausch statt Wartung?</strong>
+    <div style="white-space: pre-line">{{ komponente.ersatzhinweis }}</div>
+    <a class="btn btn-sm btn-outline-dark mt-2"
+        href="{{ url_for('velos.komponente_tauschen', komponente_id=komponente.id) }}">Stattdessen tauschen</a>
+</div>
+{% endif %}
+
 <form method="post" class="card card-body">
     {% if checkliste %}
     <fieldset class="mb-3">
