@@ -25,7 +25,7 @@ Service mit dem eingebauten Python-Runtime.
 Workflow `.github/workflows/ci-cd.yml`:
 
  1. Bei jedem Push und Pull Request: `ruff check` und `pytest`.
- 2. Bei Push auf `main` und grünen Tests: `requirements.txt` aus `uv`
+ 2. Bei Push auf `master` und grünen Tests: `requirements.txt` aus `uv`
     erzeugen und mit `azure/webapps-deploy` auf App Service laden.
     Azure installiert die Pakete und startet `startup.sh`.
 
