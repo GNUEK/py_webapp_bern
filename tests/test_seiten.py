@@ -520,7 +520,8 @@ def test_ersatzhinweis_bearbeiten_und_beim_tausch_uebernehmen(client, app):
     assert komponenten(app)[0]["ersatzhinweis"] == "Bei 0.5 % Verschleiss tauschen"
 
     # Das Tauschformular schlägt den Hinweis der alten Komponente vor
-    assert "Bei 0.5 % Verschleiss tauschen" in client.get("/komponenten/1/tauschen").text
+    tauschen = client.get("/komponenten/1/tauschen").text
+    assert "Bei 0.5 % Verschleiss tauschen" in tauschen
 
 
 def test_standardkomponenten_haben_ersatzhinweis_fuer_verschleissteile(client, app):
