@@ -9,7 +9,7 @@ Accepted
 ## Context
 
 Die Aufgabenstellung verlangt ein Python-Backend mit Flask, Django oder
-FastAPI. Wir sind drei Personen ohne Informatik-Hintergrund mit wenig Zeit.
+FastAPI. Wir sind drei Personen ohne Informatik-Hintergrund.
 Die App braucht nur wenige Seiten mit Formularen und Listen.
 
 ## Options Considered
@@ -34,4 +34,4 @@ Azure App Service.
 ## Consequences
 
 Eingabeprüfung (`formulare.py`) und Datenbankzugriff (`db.py`) schreiben wir
-selbst. Ein Login fehlt; siehe Entscheid 0005.
+selbst. Login wird über gemeinsames Passwort gewährleistet.
