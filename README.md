@@ -75,25 +75,30 @@ Tabelle `benutzer`, alle sehen dieselben Daten
 Anmeldung leitet jede Seite auf `/login` weiter. In der Tabelle steht nur ein
 Hash des Passworts, nie das Passwort selbst.
 
-Für den Prototyp gibt es einen gemeinsamen Benutzer **`team`**. Das Passwort
-und den fertigen `INSERT`-Befehl gibt es im Team-Chat (nicht im Repository,
-weil es öffentlich ist).
+#### Benutzer einrichten oder Passwort ändern
 
-Es gibt keine Registrierung in der App. Benutzer richtet man mit der
-VS-Code-Erweiterung **SQLite** (von alexcvzz) ein:
+Es gibt keine Registrierung in der App. Benutzer legt man mit dem Skript
+`tools/benutzer_setzen.py` an. Es braucht nur die Python-Standardbibliothek
+und läuft deshalb auch in der SSH-Konsole von Azure. Gibt es den Namen schon,
+ersetzt es nur das Passwort.
 
-1. Hash erzeugen: `uv run flask --app src/app passwort-hash`, das Passwort
-   zweimal eingeben und die ausgegebene Zeile (beginnt mit `scrypt:`) kopieren.
-2. In VS Code `Ctrl+Shift+P` → «SQLite: New Query» → `instance/velo.db` wählen.
-3. Eintippen und mit Rechtsklick → «Run Query» ausführen:
+1. **Hash erzeugen (lokal):** `uv run flask --app src/app passwort-hash`,
+   das Passwort zweimal eingeben und die ausgegebene Zeile (beginnt mit
+   `scrypt:`) kopieren. Den Hash nirgends veröffentlichen.
+2. **Auf Azure eintragen:** Azure-Portal → Web App → *Entwicklungstools →
+   SSH → Los*, dann:
 
-   ```sql
-   INSERT INTO benutzer (name, passwort_hash) VALUES ('joel', 'scrypt:...');
+   ```bash
+   cd /home/site/wwwroot
+   DATABASE_PATH=/home/data/velo.db python3 tools/benutzer_setzen.py NAME 'HASH'
    ```
 
-Passwort ändern: neuen Hash erzeugen und
-`UPDATE benutzer SET passwort_hash = '...' WHERE name = 'joel';`.
-Benutzer löschen: `DELETE FROM benutzer WHERE name = 'joel';`.
+   Den Hash in **einfachen** Anführungszeichen übergeben, weil er `$`-Zeichen
+   enthält. Ein Neustart der App ist nicht nötig.
+
+Lokal funktioniert dasselbe mit
+`uv run python tools/benutzer_setzen.py NAME 'HASH'`. Die App muss dafür
+einmal gestartet worden sein, damit die Datenbank existiert.
 
 ## Strava einrichten (optional)
 
@@ -152,6 +157,7 @@ src/app/
 └── static/       CSS
 tests/            pytest: Fälligkeitslogik, Seiten, Strava (ohne echten Aufruf)
 docs/             Architektur und Entscheide
+tools/            benutzer_setzen.py: Benutzer anlegen (lokal und Azure)
 ```
 
 Die wichtigsten Ideen:

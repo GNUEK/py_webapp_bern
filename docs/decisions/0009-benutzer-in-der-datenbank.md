@@ -27,12 +27,17 @@ eine ganz einfache Benutzerverwaltung in der Datenbank, in der man Benutzer
 ## Decision
 
 Tabelle `benutzer` mit `name` und `passwort_hash` (Werkzeug-Hash). Keine
-Registrierung in der App: Benutzer richtet man mit der VS-Code-Erweiterung
-SQLite ein, den Hash erzeugt `uv run flask --app src/app passwort-hash`.
+Registrierung in der App: Den Hash erzeugt
+`uv run flask --app src/app passwort-hash`, eingetragen wird er mit dem
+Skript `tools/benutzer_setzen.py`, auf Azure über die SSH-Konsole.
 Alle Benutzer sehen dieselben Daten. Für den Prototyp verwenden wir bewusst
-nur einen gemeinsamen Benutzer `team`; das Passwort steht im Team-Chat, nicht
-im Repository. Entschieden vom Projektteam
+nur einen gemeinsamen Benutzer. Entschieden vom Projektteam
 (Joel Schwarz) nach der Rückmeldung im Kurs.
+
+Zuerst war die VS-Code-Erweiterung SQLite als DB-Tool vorgesehen. Sie
+erreicht aber nur die lokale Datenbank, nicht die auf Azure. Darum das
+Skript: Es braucht nur die Python-Standardbibliothek und läuft deshalb auch
+in der SSH-Konsole von Azure.
 
 ## Reasons
 
@@ -44,10 +49,11 @@ den Fingerabdruck der Eingabe damit.
 
 ## Consequences
 
- * Ohne Eintrag in `benutzer` kann sich niemand anmelden. Nach dem ersten
-   Start muss man lokal einen Benutzer einrichten (Anleitung im README).
- * Auf Azure liegt die Datenbank unter `/home/data/velo.db`. Die
-   VS-Code-Erweiterung erreicht sie nicht direkt; dort braucht es einen
-   anderen Weg (offen, eigenes Issue).
+ * Ohne Eintrag in `benutzer` kann sich niemand anmelden. Auf Azure und in
+   jeder lokalen Datenbank muss man den Benutzer einmal einrichten
+   (Anleitung im README).
+ * Hash und Passwort gehören nicht ins Repository und nicht in Issues: Das
+   Repository ist öffentlich, und ein kurzes Passwort lässt sich aus dem Hash
+   durch Ausprobieren finden.
  * Für einen echten Betrieb fehlen weiterhin: Schutz gegen viele
    Rateversuche, CSRF-Tokens, Rollen.

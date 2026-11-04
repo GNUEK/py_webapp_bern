@@ -35,7 +35,7 @@ def app(tmp_path):
             "STRAVA_CLIENT_SECRET": None,
         }
     )
-    # Ein Testbenutzer, so wie man ihn sonst per DB-Tool einträgt
+    # Ein Testbenutzer, so wie ihn sonst tools/benutzer_setzen.py einträgt
     with test_app.app_context():
         db = get_db()
         db.execute(
