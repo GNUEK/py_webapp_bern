@@ -34,4 +34,5 @@ Azure App Service.
 ## Consequences
 
 Eingabeprüfung (`formulare.py`) und Datenbankzugriff (`db.py`) schreiben wir
-selbst. Login wird über gemeinsames Passwort gewährleistet.
+selbst. Login über Benutzer in der Datenbank (siehe
+[0009](0009-benutzer-in-der-datenbank.md)).
