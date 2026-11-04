@@ -29,7 +29,9 @@ eine ganz einfache Benutzerverwaltung in der Datenbank, in der man Benutzer
 Tabelle `benutzer` mit `name` und `passwort_hash` (Werkzeug-Hash). Keine
 Registrierung in der App: Benutzer richtet man mit der VS-Code-Erweiterung
 SQLite ein, den Hash erzeugt `uv run flask --app src/app passwort-hash`.
-Alle Benutzer sehen dieselben Daten. Entschieden vom Projektteam
+Alle Benutzer sehen dieselben Daten. Für den Prototyp verwenden wir bewusst
+nur einen gemeinsamen Benutzer `team`; das Passwort steht im Team-Chat, nicht
+im Repository. Entschieden vom Projektteam
 (Joel Schwarz) nach der Rückmeldung im Kurs.
 
 ## Reasons

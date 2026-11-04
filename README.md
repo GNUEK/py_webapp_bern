@@ -75,7 +75,11 @@ Tabelle `benutzer`, alle sehen dieselben Daten
 Anmeldung leitet jede Seite auf `/login` weiter. In der Tabelle steht nur ein
 Hash des Passworts, nie das Passwort selbst.
 
-Es gibt keine Registrierung in der App. Neue Benutzer richtet man mit der
+Für den Prototyp gibt es einen gemeinsamen Benutzer **`team`**. Das Passwort
+und den fertigen `INSERT`-Befehl gibt es im Team-Chat (nicht im Repository,
+weil es öffentlich ist).
+
+Es gibt keine Registrierung in der App. Benutzer richtet man mit der
 VS-Code-Erweiterung **SQLite** (von alexcvzz) ein:
 
 1. Hash erzeugen: `uv run flask --app src/app passwort-hash`, das Passwort
