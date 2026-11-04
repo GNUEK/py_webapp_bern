@@ -1,7 +1,7 @@
 """Login mit Benutzername und Passwort aus der Tabelle ``benutzer``.
 
-Neue Benutzer legt man mit einem DB-Tool an (siehe README). In der Tabelle
-steht nur der Hash des Passworts. Den Hash erzeugt der Befehl
+Neue Benutzer legt man mit ``tools/benutzer_setzen.py`` an (siehe README).
+In der Tabelle steht nur der Hash des Passworts. Den Hash erzeugt der Befehl
 ``uv run flask --app src/app passwort-hash``.
 
 Alle angemeldeten Benutzer sehen dieselben Daten. Nach der Anmeldung merkt
@@ -56,7 +56,7 @@ def passwort_stimmt(name: str, passwort: str) -> bool:
     try:
         return check_password_hash(benutzer["passwort_hash"], passwort)
     except ValueError:
-        # Kein gültiger Hash, z.B. beim Einfügen im DB-Tool falsch kopiert
+        # Kein gültiger Hash, z.B. von Hand in die Datenbank eingetragen
         return False
 
 

@@ -74,7 +74,7 @@ def test_falsche_zugangsdaten_werden_abgelehnt(anonym, name, passwort):
 
 
 def test_ungueltiger_hash_in_der_datenbank(anonym, app):
-    # z.B. Passwort statt Hash im DB-Tool eingetragen
+    # z.B. Passwort statt Hash von Hand in die Datenbank eingetragen
     with app.app_context():
         db = get_db()
         db.execute("INSERT INTO benutzer (name, passwort_hash) VALUES ('x', 'abc')")
