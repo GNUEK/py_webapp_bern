@@ -61,12 +61,39 @@ def test_login_leitet_nicht_auf_fremde_seiten(anonym, ziel):
     assert antwort.location == "/"
 
 
-@pytest.mark.parametrize("passwort", ["falsch", "velo26", ""])
-def test_falsches_passwort_wird_abgelehnt(anonym, passwort):
-    antwort = melde_an(anonym, passwort=passwort)
+@pytest.mark.parametrize(
+    "name, passwort",
+    [("test", "falsch"), ("test", ""), ("unbekannt", "test-passwort")],
+)
+def test_falsche_zugangsdaten_werden_abgelehnt(anonym, name, passwort):
+    antwort = melde_an(anonym, name=name, passwort=passwort)
     assert antwort.status_code == 401
-    assert "Falsches Passwort." in antwort.text
+    # Gleiche Meldung, egal ob Benutzer oder Passwort falsch ist
+    assert "Benutzername oder Passwort ist falsch." in antwort.text
     assert anonym.get("/").status_code == 302
+
+
+def test_ungueltiger_hash_in_der_datenbank(anonym, app):
+    # z.B. Passwort statt Hash im DB-Tool eingetragen
+    with app.app_context():
+        db = get_db()
+        db.execute("INSERT INTO benutzer (name, passwort_hash) VALUES ('x', 'abc')")
+        db.commit()
+    assert melde_an(anonym, name="x", passwort="abc").status_code == 401
+
+
+def test_navigation_zeigt_benutzer(client):
+    assert "Abmelden (test)" in client.get("/").text
+
+
+def test_befehl_passwort_hash(app):
+    from werkzeug.security import check_password_hash
+
+    ergebnis = app.test_cli_runner().invoke(
+        args=["passwort-hash"], input="geheim\ngeheim\n"
+    )
+    assert ergebnis.exit_code == 0
+    assert check_password_hash(ergebnis.output.strip().splitlines()[-1], "geheim")
 
 
 def test_abmelden(client):

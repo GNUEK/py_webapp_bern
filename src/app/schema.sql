@@ -57,3 +57,12 @@ CREATE TABLE IF NOT EXISTS strava_token (
     expires_at     INTEGER NOT NULL,
     athlet         TEXT
 );
+
+-- Benutzer für den Login. Neue Benutzer legt man mit einem DB-Tool an
+-- (siehe README). Gespeichert ist nur der Hash des Passworts, nie das
+-- Passwort selbst.
+CREATE TABLE IF NOT EXISTS benutzer (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    name           TEXT    NOT NULL UNIQUE,
+    passwort_hash  TEXT    NOT NULL
+);

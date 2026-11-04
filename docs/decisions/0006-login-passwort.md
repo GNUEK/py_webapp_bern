@@ -4,8 +4,7 @@ Date: 2026-10-19
 
 ## Status
 
-Accepted (ergänzt [0005](0005-umfang-und-strava.md), wo Login noch
-ausgeschlossen war)
+Superseded durch [0009](0009-benutzer-in-der-datenbank.md)
 
 ## Context
 

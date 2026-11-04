@@ -32,9 +32,9 @@ uv sync --all-groups
 uv run flask --app src/app run --debug
 ```
 
-Danach http://localhost:5000 öffnen und mit dem Passwort `Velo26` anmelden
-(siehe [Login](#login)). Die Datenbank `instance/velo.db` wird beim ersten
-Start automatisch angelegt.
+Danach http://localhost:5000 öffnen und anmelden. Die Datenbank
+`instance/velo.db` wird beim ersten Start automatisch angelegt. Beim ersten
+Mal zuerst einen Benutzer einrichten (siehe [Login](#login)).
 
 Wie auf Azure mit Gunicorn starten (Linux/macOS):
 
@@ -69,12 +69,27 @@ Lokal liest die App eine Datei `.env` (Vorlage: `.env.example`).
 
 ### Login
 
-Die ganze App ist durch ein gemeinsames Passwort geschützt: **`Velo26`**.
-Es gibt keine Benutzernamen und keine Registrierung
-([Entscheid 0006](docs/decisions/0006-login-passwort.md)). Ohne Anmeldung
-leitet jede Seite auf `/login` weiter, ausgenommen die Login-Seite selbst und
-das CSS. Das Passwort steht in `src/app/auth.py` (`PASSWORT`) und ist damit
-für alle sichtbar, die das Repository lesen können.
+Man meldet sich mit Benutzername und Passwort an. Die Benutzer stehen in der
+Tabelle `benutzer`, alle sehen dieselben Daten
+([Entscheid 0009](docs/decisions/0009-benutzer-in-der-datenbank.md)). Ohne
+Anmeldung leitet jede Seite auf `/login` weiter. In der Tabelle steht nur ein
+Hash des Passworts, nie das Passwort selbst.
+
+Es gibt keine Registrierung in der App. Neue Benutzer richtet man mit der
+VS-Code-Erweiterung **SQLite** (von alexcvzz) ein:
+
+1. Hash erzeugen: `uv run flask --app src/app passwort-hash`, das Passwort
+   zweimal eingeben und die ausgegebene Zeile (beginnt mit `scrypt:`) kopieren.
+2. In VS Code `Ctrl+Shift+P` → «SQLite: New Query» → `instance/velo.db` wählen.
+3. Eintippen und mit Rechtsklick → «Run Query» ausführen:
+
+   ```sql
+   INSERT INTO benutzer (name, passwort_hash) VALUES ('joel', 'scrypt:...');
+   ```
+
+Passwort ändern: neuen Hash erzeugen und
+`UPDATE benutzer SET passwort_hash = '...' WHERE name = 'joel';`.
+Benutzer löschen: `DELETE FROM benutzer WHERE name = 'joel';`.
 
 ## Strava einrichten (optional)
 
@@ -121,7 +136,7 @@ Datenbank, wenn der Container neu startet.
 ```
 src/app/
 ├── __init__.py   App erstellen und konfigurieren (create_app, app)
-├── auth.py       Login mit Passwort, Prüfung vor jeder Anfrage
+├── auth.py       Login mit Benutzern aus der DB, Prüfung vor jeder Anfrage
 ├── views.py      Seiten und Operationen: Velos, Komponenten, Wartung
 ├── strava.py     Strava-Anmeldung (OAuth2) und Kilometerabgleich
 ├── wartung.py    Fälligkeitslogik, ohne Flask und ohne Datenbank
