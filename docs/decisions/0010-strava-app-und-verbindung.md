@@ -77,5 +77,7 @@ Entschieden vom Projektteam bei der Arbeit an Issue #10.
    anpassen.
  * Will das Team später eine Verbindung pro Benutzer, braucht es
    `strava_token.benutzer_id` und angepasste Abfragen in `strava.py`.
- * Ergebnis des Tests, ob `localhost` mit der Azure-Domain funktioniert:
-   *noch offen*.
+ * Test vom 2026-11-14 bestätigt: Lokal (`localhost`) klappt der ganze
+   Ablauf, obwohl in Strava die Azure-Domain eingetragen ist. Getestet:
+   verbinden, Velo zuordnen, Kilometer übernehmen. Der Test auf Azure steht
+   noch aus.
