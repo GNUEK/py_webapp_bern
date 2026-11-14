@@ -102,15 +102,24 @@ einmal gestartet worden sein, damit die Datenbank existiert.
 
 ## Strava einrichten (optional)
 
+Eine Strava-App reicht für lokal und Azure
+([Entscheid 0010](docs/decisions/0010-strava-app-und-verbindung.md)).
+
 1. Auf https://www.strava.com/settings/api eine App anlegen.
-2. «Authorization Callback Domain» auf `localhost` setzen (lokal) bzw. auf
-   den Hostnamen der Azure-App, z.B. `velo-logbuch.azurewebsites.net`.
+2. «Authorization Callback Domain» auf den Hostnamen der Azure-App setzen,
+   genau wie in der Adresszeile, ohne `https://`, z.B.
+   `velo-logbuch.azurewebsites.net`. Lokal funktioniert `localhost`
+   trotzdem, weil Strava es immer zulässt.
 3. Client-ID und Client-Secret als `STRAVA_CLIENT_ID` und
    `STRAVA_CLIENT_SECRET` in `.env` bzw. in den Azure-App-Settings eintragen.
-4. In der App auf «Strava» → «Mit Strava verbinden», danach jedes Velo
-   einem Strava-Velo zuordnen und «Kilometer übernehmen».
+   Das Secret nie ins Repository, in Issues oder in den Chat stellen.
+4. In der App auf «Strava» → «Mit Strava verbinden» und bei Strava **beide**
+   Berechtigungen zulassen. Danach jedes Velo einem Strava-Velo zuordnen und
+   «Kilometer übernehmen».
 
-Die Velos müssen in Strava als Ausrüstung («Gear») erfasst sein.
+Die Velos müssen in Strava als Ausrüstung («Gear») erfasst sein. Eine neue
+Strava-App lässt zuerst nur das Konto zu, das sie angelegt hat. Die App
+kennt nur eine gemeinsame Strava-Verbindung.
 
 ## Deployment auf Azure App Service
 
