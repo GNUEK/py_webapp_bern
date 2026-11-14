@@ -4,8 +4,7 @@ Date: 2026-11-14
 
 ## Status
 
-Proposed (wird nach dem End-to-End-Test lokal und auf Azure auf Accepted
-gesetzt, Issue #10)
+Accepted (Test auf Azure steht noch aus, Issue #10)
 
 ## Context
 
