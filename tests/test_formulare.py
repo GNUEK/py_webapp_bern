@@ -164,3 +164,20 @@ def test_url_ungueltig(eingabe):
     fehler = f.Fehlerliste()
     assert f.url({"anleitung_url": eingabe}, "anleitung_url", fehler) is None
     assert len(fehler) == 1
+
+
+# Beschriftungen --------------------------------------------------------------
+
+
+def test_jedes_gepruefte_feld_hat_eine_beschriftung():
+    """Sonst zeigt eine Fehlermeldung den technischen Feldnamen.
+
+    Sucht in views.py alle Aufrufe wie ``f.text(form, "name", ...)``.
+    """
+    import re
+    from pathlib import Path
+
+    views = Path(f.__file__).with_name("views.py").read_text(encoding="utf-8")
+    felder = set(re.findall(r'f\.\w+\((?:request\.)?form, "(\w+)"', views))
+    assert felder  # die Suche hat überhaupt etwas gefunden
+    assert felder - f.BESCHRIFTUNG.keys() == set()

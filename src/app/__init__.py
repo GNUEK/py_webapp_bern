@@ -5,6 +5,7 @@ Objekt ``app`` (unten in dieser Datei).
 """
 
 import os
+import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,15 +26,33 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     flask_app = Flask(__name__)
     flask_app.config.from_mapping(
-        SECRET_KEY=os.environ.get("SECRET_KEY", "nur-fuer-lokale-entwicklung"),
+        SECRET_KEY=os.environ.get("SECRET_KEY"),
         DATABASE=os.environ.get(
             "DATABASE_PATH", str(PROJEKT_ORDNER / "instance" / "velo.db")
         ),
         STRAVA_CLIENT_ID=os.environ.get("STRAVA_CLIENT_ID"),
         STRAVA_CLIENT_SECRET=os.environ.get("STRAVA_CLIENT_SECRET"),
+        # Session-Cookie absichern (Entscheid 0011):
+        # Lax: Eine fremde Seite kann keine POST-Anfrage mit unserem Cookie
+        # abschicken (einfacher Schutz gegen CSRF).
+        SESSION_COOKIE_SAMESITE="Lax",
+        # Secure: Cookie nur über https senden. Nur auf Azure, das die
+        # Variable WEBSITE_HOSTNAME immer setzt. Lokal läuft die App über http.
+        SESSION_COOKIE_SECURE="WEBSITE_HOSTNAME" in os.environ,
     )
     if test_config:
         flask_app.config.update(test_config)
+
+    if not flask_app.config["SECRET_KEY"]:
+        # Ein fester Ersatzwert stünde öffentlich im Repository. Damit könnte
+        # jeder ein gültiges Session-Cookie fälschen und wäre "angemeldet".
+        # Ein Zufallswert ist sicher, gilt aber nur bis zum nächsten Neustart:
+        # Danach sind alle abgemeldet.
+        flask_app.config["SECRET_KEY"] = secrets.token_hex(32)
+        flask_app.logger.warning(
+            "SECRET_KEY ist nicht gesetzt: Zufallswert verwendet. "
+            "Nach jedem Neustart sind alle abgemeldet."
+        )
 
     # Azure leitet Anfragen über einen Proxy weiter. Ohne ProxyFix würde
     # Flask glauben, die Seite laufe über http statt https.
@@ -61,8 +80,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     return flask_app
 
 
+# Das Objekt, das Gunicorn mit "app:app" startet. Die Zeile läuft bei jedem
+# Import dieses Moduls, also auch in den Tests: Dabei wird die normale
+# Datenbank (instance/velo.db) angelegt, falls sie fehlt. Die Tests selbst
+# arbeiten mit create_app() und einer eigenen, leeren Datenbank.
 app = create_app()
-
-
-if __name__ == "__main__":
-    app.run(debug=True)

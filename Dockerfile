@@ -5,6 +5,8 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY README.md ./
 COPY src ./src
+# Skript zum Anlegen von Benutzern (siehe README, Abschnitt Docker)
+COPY tools ./tools
 
 RUN pip install --no-cache-dir uv \
     && uv sync --no-dev

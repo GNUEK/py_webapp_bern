@@ -96,12 +96,12 @@
                 </td>
                 <td>{{ badge(f.status) }}<br><span class="small">{{ rest(f) }}</span></td>
                 <td class="small">
-                    {% if k.intervall_km %}{{ k.intervall_km }} km{% endif %}
+                    {% if k.intervall_km %}{{ k.intervall_km | km }} km{% endif %}
                     {% if k.intervall_km and k.intervall_tage %}<br>{% endif %}
                     {% if k.intervall_tage %}{{ k.intervall_tage }} Tage{% endif %}
                     {% if not k.intervall_km and not k.intervall_tage %}–{% endif %}
                 </td>
-                <td class="small">{{ k.letzte_wartung_datum }}<br>bei {{ k.letzte_wartung_km }} km</td>
+                <td class="small">{{ k.letzte_wartung_datum }}<br>bei {{ k.letzte_wartung_km | km }} km</td>
                 <td class="text-end">
                     <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
                         {% if k.intervall_km or k.intervall_tage %}
@@ -142,7 +142,7 @@
             <li class="list-group-item">
                 <div class="d-flex justify-content-between">
                     <strong>{{ w.bezeichnung }}</strong>
-                    <span class="small text-body-secondary">{{ w.datum }} · {{ w.km_stand }} km</span>
+                    <span class="small text-body-secondary">{{ w.datum }} · {{ w.km_stand | km }} km</span>
                 </div>
                 {% if w.erledigt %}<div class="small">✓ {{ w.erledigt.split('\n') | join(' · ✓ ') }}</div>{% endif %}
                 {% if w.notiz %}<div class="small text-body-secondary">{{ w.notiz }}</div>{% endif %}
@@ -168,7 +168,7 @@
                 <div class="d-flex justify-content-between">
                     <span>{{ k.bezeichnung }} <span class="small text-body-secondary">({{ k.kategorie }})</span></span>
                     <span class="small text-body-secondary">
-                        {{ k.einbau_datum }} – {{ k.ausbau_datum }} · {{ k.ausbau_km - k.einbau_km }} km
+                        {{ k.einbau_datum }} – {{ k.ausbau_datum }} · {{ (k.ausbau_km - k.einbau_km) | km }} km
                     </span>
                 </div>
                 {% if not k.ersetzt %}

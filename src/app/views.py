@@ -595,6 +595,13 @@ def wartung_erfassen(komponente_id: int):
         fehler.append("Der Kilometerstand ist grösser als der des Velos.")
     if km is not None and km < komponente["letzte_wartung_km"]:
         fehler.append("Der Kilometerstand liegt vor der letzten Wartung.")
+    # Sonst würde die Zählung nach Tagen auf ein früheres Datum zurückspringen.
+    # Ohne Wartung ist letzte_wartung_datum das Einbaudatum.
+    if datum and datum.isoformat() < komponente["letzte_wartung_datum"]:
+        fehler.append(
+            "Das Datum liegt vor der letzten Wartung bzw. dem Einbau "
+            f"({komponente['letzte_wartung_datum']})."
+        )
     if fehler:
         for meldung in fehler:
             flash(meldung, "danger")

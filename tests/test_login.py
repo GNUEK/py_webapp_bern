@@ -107,3 +107,42 @@ def test_strava_callback_erreicht_mit_login_die_app(client):
     # Mit Login wird der Callback verarbeitet (und hier wegen state abgelehnt)
     antwort = client.get("/strava/callback?code=x&state=falsch")
     assert antwort.location == "/strava"
+
+
+# --- Session-Cookie absichern (Entscheid 0011) ------------------------------
+
+
+def test_ohne_secret_key_wird_zufallswert_verwendet(tmp_path, monkeypatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    from app import create_app
+
+    erste = create_app({"DATABASE": str(tmp_path / "a.db")})
+    zweite = create_app({"DATABASE": str(tmp_path / "b.db")})
+    # Kein fester, öffentlich bekannter Wert, sondern jedes Mal ein neuer
+    assert erste.config["SECRET_KEY"]
+    assert erste.config["SECRET_KEY"] != zweite.config["SECRET_KEY"]
+
+
+def test_gesetzter_secret_key_wird_verwendet(tmp_path, monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "aus-der-umgebung")
+    from app import create_app
+
+    test_app = create_app({"DATABASE": str(tmp_path / "a.db")})
+    assert test_app.config["SECRET_KEY"] == "aus-der-umgebung"
+
+
+def test_cookie_ist_samesite_lax(anonym):
+    antwort = anonym.post("/login", data={"name": "test", "passwort": "test-passwort"})
+    assert "SameSite=Lax" in antwort.headers["Set-Cookie"]
+
+
+@pytest.mark.parametrize("auf_azure", [True, False])
+def test_cookie_nur_auf_azure_secure(tmp_path, monkeypatch, auf_azure):
+    if auf_azure:
+        monkeypatch.setenv("WEBSITE_HOSTNAME", "velo.azurewebsites.net")
+    else:
+        monkeypatch.delenv("WEBSITE_HOSTNAME", raising=False)
+    from app import create_app
+
+    test_app = create_app({"DATABASE": str(tmp_path / "a.db")})
+    assert test_app.config["SESSION_COOKIE_SECURE"] is auf_azure

@@ -8,33 +8,60 @@ sie optional aus Strava.
 Projekt im Modul Softwareentwicklung (Master Wirtschaftsinformatik), Gruppe
 Montag+.
 
+**Live auf Azure:**
+https://velo-logbuch-htdegwarhzgqbpb0.switzerlandnorth-01.azurewebsites.net/
+(Anmeldung nötig)
+
 ## Funktionen
 
-| Nr. | Funktion | Wo |
-| --- | --- | --- |
-| M1 | Velo erfassen und speichern (Name, Typ, Rahmennummer, Grösse, Gewicht, Preis, Kilometerstand) | «Velo erfassen» |
-| M2 | Übersicht aller Velos mit Wartungsstatus (ok, bald fällig, fällig) | Startseite |
-| M3 | Automatisches Deployment über GitHub Actions auf Azure | `.github/workflows/ci-cd.yml` |
-| M4 | Unittests, Architektur, Entscheide | `tests/`, `docs/` |
-| K1 | Kilometerstand nachführen, Wartung als erledigt markieren | Velo-Detailseite |
-| K2 | Komponenten mit eigenem Intervall nach Kilometern und/oder Tagen | Velo-Detailseite |
-| K3 | Komponenten tauschen, ergänzen (z.B. Garmin, Flaschenhalter) und ausbauen | Velo-Detailseite |
-| K4 | Strava: Gesamtkilometer pro Velo übernehmen (optional) | «Strava» |
-| K5 | Wartungscheckliste und Link zur Montageanleitung pro Komponente | Wartungsformular |
+| Funktion | Wo |
+| --- | --- |
+| Anmelden mit Benutzername und Passwort | Login-Seite |
+| Übersicht aller Velos mit Wartungsstatus (ok, bald fällig, fällig) | Startseite |
+| Velo erfassen, bearbeiten und löschen (Name, Typ, Rahmennummer, Grösse, Gewicht, Preis, Kilometerstand), auf Wunsch mit Standardkomponenten | «Velo erfassen», Velo-Detailseite |
+| Kilometerstand nachführen oder nach einem Tippfehler korrigieren | Velo-Detailseite |
+| Komponenten mit Intervall nach Kilometern und/oder Tagen hinzufügen, bearbeiten, tauschen und ausbauen, auch Zubehör ohne Wartung (z.B. Garmin, Flaschenhalter) | Velo-Detailseite |
+| Wartung erfassen mit Checkliste, Notiz, Link zur Anleitung und Hinweis, wann ein Tausch nötig ist | Wartungsformular |
+| Wartungsverlauf und ausgebaute Komponenten mit ihrer Laufleistung | Velo-Detailseite |
+| Letzten Schritt rückgängig machen: Wartung löschen, Tausch rückgängig, wieder einbauen | Velo-Detailseite |
+| Gesamtkilometer pro Velo aus Strava übernehmen (optional) | «Strava», Startseite |
+| Tests bei jedem Push, automatisches Deployment auf Azure bei Push auf `master` | GitHub Actions |
 
-## Get started
+## Erste Schritte
 
 Voraussetzung: [uv](https://docs.astral.sh/uv/) ist installiert.
 
-```bash
-uv lock          # einmalig, falls uv.lock noch nicht zu pyproject.toml passt
-uv sync --all-groups
-uv run flask --app src/app run --debug
-```
+1. Pakete installieren:
 
-Danach http://localhost:5000 öffnen und anmelden. Die Datenbank
-`instance/velo.db` wird beim ersten Start automatisch angelegt. Beim ersten
-Mal zuerst einen Benutzer einrichten (siehe [Login](#login)).
+   ```bash
+   uv sync --all-groups
+   ```
+
+2. App starten. Beim ersten Start legt sie die Datenbank `instance/velo.db`
+   an. Das Terminal offen lassen:
+
+   ```bash
+   uv run flask --app src/app run --debug
+   ```
+
+3. In einem zweiten Terminal einen Passwort-Hash erzeugen (Passwort zweimal
+   eingeben, die Zeile mit `scrypt:` kopieren):
+
+   ```bash
+   uv run flask --app src/app passwort-hash
+   ```
+
+4. Einen Benutzer mit diesem Hash eintragen. Den Hash in **einfache**
+   Anführungszeichen setzen, weil er `$`-Zeichen enthält:
+
+   ```bash
+   uv run python tools/benutzer_setzen.py NAME 'HASH'
+   ```
+
+5. http://localhost:5000 öffnen und mit NAME und Passwort anmelden.
+
+Schritte 3 und 4 braucht es nur einmal pro Datenbank. Mehr dazu unter
+[Login](#login).
 
 Wie auf Azure mit Gunicorn starten (Linux/macOS):
 
@@ -63,7 +90,7 @@ Lokal liest die App eine Datei `.env` (Vorlage: `.env.example`).
 
 | Variable | Zweck |
 | --- | --- |
-| `SECRET_KEY` | schützt die Session; auf Azure unbedingt setzen |
+| `SECRET_KEY` | schützt die Session; auf Azure unbedingt setzen. Fehlt er, nimmt die App einen Zufallswert, und nach jedem Neustart sind alle abgemeldet ([Entscheid 0011](docs/decisions/0011-session-absichern.md)) |
 | `DATABASE_PATH` | Ort der SQLite-Datei; auf Azure `/home/data/velo.db` |
 | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` | nur für K4 Strava |
 
@@ -107,8 +134,8 @@ Eine Strava-App reicht für lokal und Azure
 
 1. Auf https://www.strava.com/settings/api eine App anlegen.
 2. «Authorization Callback Domain» auf den Hostnamen der Azure-App setzen,
-   genau wie in der Adresszeile, ohne `https://`, z.B.
-   `velo-logbuch.azurewebsites.net`. Lokal funktioniert `localhost`
+   genau wie in der Adresszeile, ohne `https://` und ohne `/`, bei uns
+   `velo-logbuch-htdegwarhzgqbpb0.switzerlandnorth-01.azurewebsites.net`. Lokal funktioniert `localhost`
    trotzdem, weil Strava es immer zulässt.
 3. Client-ID und Client-Secret als `STRAVA_CLIENT_ID` und
    `STRAVA_CLIENT_SECRET` in `.env` bzw. in den Azure-App-Settings eintragen.
@@ -129,27 +156,68 @@ Einmalig einrichten:
 2. Unter *Konfiguration*:
    * Startup Command: `startup.sh`
    * App-Settings: `SCM_DO_BUILD_DURING_DEPLOYMENT=true`,
-     `SECRET_KEY=<zufälliger Text>`, `DATABASE_PATH=/home/data/velo.db`,
+     `SECRET_KEY` (zufälliger Wert, siehe unten), `DATABASE_PATH=/home/data/velo.db`,
      optional die beiden Strava-Variablen.
+
+   Einen zufälligen Wert für `SECRET_KEY` erzeugt:
+
+   ```bash
+   uv run python -c "import secrets; print(secrets.token_hex(32))"
+   ```
 3. In der Web App unter *Übersicht* → «Veröffentlichungsprofil herunterladen».
 4. In GitHub unter *Settings → Secrets and variables → Actions*:
    * Secret `AZURE_WEBAPP_PUBLISH_PROFILE` = Inhalt der heruntergeladenen Datei
    * Variable `AZURE_WEBAPP_NAME` = Name der Web App
 
 Ab dann deployt jeder Push auf `master` automatisch, sofern alle Tests grün
-sind. Ohne das Secret läuft nur der Testteil.
+sind. Ohne die Variable `AZURE_WEBAPP_NAME` läuft nur der Testteil (z.B. in
+einem Fork). Ist die Variable gesetzt, aber das Secret fehlt, schlägt das
+Deployment fehl.
 
 ## Lokales Deployment mit Docker
 
 ```bash
 docker build . -t velo-logbuch
-docker run -p 8000:8000 -v velo-daten:/app/data velo-logbuch
+docker run -d --name velo-logbuch -p 8000:8000 \
+    -e SECRET_KEY="$(uv run python -c 'import secrets; print(secrets.token_hex(32))')" \
+    -v velo-daten:/app/data velo-logbuch
 ```
 
-Danach http://localhost:8000 öffnen. Das Volume `velo-daten` behält die
-Datenbank, wenn der Container neu startet.
+Das Volume `velo-daten` behält die Datenbank, wenn der Container neu
+startet. `SECRET_KEY` wird beim `docker run` einmal zufällig erzeugt und
+bleibt bei einem Neustart des Containers erhalten.
 
-## Understanding the sources
+Beim ersten Mal einen Benutzer anlegen, wie unter
+[Benutzer einrichten](#benutzer-einrichten-oder-passwort-ändern)
+beschrieben. Nur der zweite Schritt läuft im Container:
+
+```bash
+uv run flask --app src/app passwort-hash    # lokal, Hash kopieren
+docker exec velo-logbuch python tools/benutzer_setzen.py NAME 'HASH'
+```
+
+Danach http://localhost:8000 öffnen und anmelden.
+
+## Bekannte Einschränkungen
+
+Die App ist ein Prototyp für den Kurs. Bewusst nicht umgesetzt:
+
+* **Gemeinsame Daten:** Alle angemeldeten Benutzer sehen und ändern
+  dieselben Velos. Es gibt keine Rollen und keine Registrierung
+  ([0009](docs/decisions/0009-benutzer-in-der-datenbank.md)).
+* **Eine Strava-Verbindung** für alle. Eine neue Strava-App lässt zudem nur
+  das Konto zu, das sie angelegt hat
+  ([0010](docs/decisions/0010-strava-app-und-verbindung.md)).
+* **Sicherheit:** Gegen CSRF schützt nur `SameSite=Lax` beim
+  Session-Cookie, es gibt keine CSRF-Tokens
+  ([0011](docs/decisions/0011-session-absichern.md)). Viele Login-Versuche
+  hintereinander werden nicht gebremst.
+* **SQLite** verträgt nur eine Instanz der App, ein Hochskalieren auf Azure
+  ist nicht möglich ([0003](docs/decisions/0003-datenbank-sqlite.md)).
+* **Rückgängig** geht nur für den letzten Schritt einer Komponente
+  ([0007](docs/decisions/0007-nur-letzten-schritt-rueckgaengig.md)).
+
+## Aufbau des Codes
 
 ```
 src/app/

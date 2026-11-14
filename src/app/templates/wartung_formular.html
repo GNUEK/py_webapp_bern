@@ -34,7 +34,8 @@
     <div class="row g-3">
         <div class="col-md-6">
             <label class="form-label" for="datum">Datum *</label>
-            <input class="form-control" id="datum" name="datum" type="date" required value="{{ werte.datum }}">
+            <input class="form-control" id="datum" name="datum" type="date" required
+                min="{{ komponente.letzte_wartung_datum }}" value="{{ werte.datum }}">
         </div>
         <div class="col-md-6">
             <label class="form-label" for="km_stand">Kilometerstand *</label>

@@ -49,7 +49,7 @@
         <tbody>
             {% for velo in velos %}
             <tr>
-                <td>{{ velo.name }} <span class="small text-body-secondary">({{ velo.km_stand }} km)</span></td>
+                <td>{{ velo.name }} <span class="small text-body-secondary">({{ velo.km_stand | km }} km)</span></td>
                 <td>
                     <form method="post" action="{{ url_for('strava.verknuepfen') }}" class="d-flex gap-2"
                         id="verknuepfen{{ velo.id }}">
@@ -58,7 +58,7 @@
                             <option value="">– nicht verknüpft –</option>
                             {% for sv in strava_velos %}
                             <option value="{{ sv.id }}" {% if velo.strava_gear_id == sv.id %}selected{% endif %}>
-                                {{ sv.name }} ({{ sv.km }} km)</option>
+                                {{ sv.name }} ({{ sv.km | km }} km)</option>
                             {% endfor %}
                         </select>
                     </form>

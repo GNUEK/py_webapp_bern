@@ -30,8 +30,6 @@ modification by a developer:
 
  * `.gitignore` contains a list of file and directory patterns that should be
    ignored by the version control system Git and should never be versioned.
- * `MANUAL.md` contains information related to this project template. They are
-   meant for an easier start but may be removed in a later step of the project.
  * `README.md` should give people that want to get started with this project a
    first and quick overview about what this project is and how to get started.
  * `pyproject.toml` is a technical description of your project and you might

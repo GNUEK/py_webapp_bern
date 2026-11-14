@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS wartung (
     erledigt       TEXT
 );
 
--- Zugangsdaten zu Strava. Es gibt höchstens eine Zeile (id = 1),
--- weil der Prototyp keine Benutzerkonten kennt.
+-- Zugangsdaten zu Strava. Es gibt höchstens eine Zeile (id = 1):
+-- Alle Benutzer teilen sich bewusst eine Strava-Verbindung (Entscheid 0010).
 CREATE TABLE IF NOT EXISTS strava_token (
     id             INTEGER PRIMARY KEY CHECK (id = 1),
     access_token   TEXT    NOT NULL,

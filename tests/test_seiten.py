@@ -142,6 +142,48 @@ def test_wartung_in_der_zukunft_wird_abgelehnt(client):
     assert antwort.status_code == 400
 
 
+def test_detailseite_zeigt_km_mit_apostroph(client):
+    erfasse_velo(client, km_stand=12000)
+    erfasse_komponente(client, einbau_km="1000", intervall_km="15000")
+    seite = client.get("/velos/1").text
+    assert "15’000 km" in seite  # Intervall
+    assert "bei 1’000 km" in seite  # letzte Wartung (= Einbau)
+    assert "noch 4’000 km" in seite  # Rest bis zur Wartung
+
+
+def test_wartung_vor_dem_einbau_wird_abgelehnt(client, app):
+    erfasse_velo(client)
+    erfasse_komponente(client, einbau_datum="2026-01-01")
+    antwort = client.post(
+        "/komponenten/1/wartung", data={"datum": "2025-12-31", "km_stand": "1000"}
+    )
+    assert antwort.status_code == 400
+    assert "vor der letzten Wartung bzw. dem Einbau" in antwort.text
+    assert komponenten(app)[0]["letzte_wartung_datum"] == "2026-01-01"
+
+
+def test_wartung_vor_der_letzten_wartung_wird_abgelehnt(client, app):
+    erfasse_velo(client)
+    erfasse_komponente(client, einbau_datum="2026-01-01")
+    client.post(
+        "/komponenten/1/wartung", data={"datum": "2026-06-01", "km_stand": "1000"}
+    )
+    antwort = client.post(
+        "/komponenten/1/wartung", data={"datum": "2026-05-31", "km_stand": "1000"}
+    )
+    assert antwort.status_code == 400
+    assert komponenten(app)[0]["letzte_wartung_datum"] == "2026-06-01"
+
+
+def test_wartung_am_selben_tag_ist_erlaubt(client):
+    erfasse_velo(client)
+    erfasse_komponente(client, einbau_datum="2026-01-01")
+    antwort = client.post(
+        "/komponenten/1/wartung", data={"datum": "2026-01-01", "km_stand": "1000"}
+    )
+    assert antwort.status_code == 302
+
+
 # K2 / K3: Komponenten -----------------------------------------------------
 
 

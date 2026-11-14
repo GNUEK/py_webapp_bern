@@ -7,7 +7,7 @@ Regeln:
  * Eine Komponente hat ein Intervall in Kilometern, in Tagen oder beides.
  * Gezählt wird ab der letzten Wartung (beim Einbau ist das der Einbau).
  * "fällig": das Intervall ist erreicht oder überschritten.
- * "bald":   weniger als 10 % der Kilometer oder höchstens 14 Tage übrig.
+ * "bald":   höchstens 10 % der Kilometer oder höchstens 14 Tage übrig.
  * Gilt beides (km und Tage), zählt das, was zuerst eintritt.
 """
 
