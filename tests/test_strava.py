@@ -52,6 +52,31 @@ def test_kilometer_werden_nur_erhoeht(client, app):
     assert stand == {"A": 1500, "B": 5000, "C": 10}
 
 
+def test_abgleich_merkt_sich_quelle_strava(client, app):
+    erfasse_velo(client, name="A", km_stand=1000)
+    erfasse_velo(client, name="B", km_stand=5000)
+    with app.app_context():
+        db = get_db()
+        db.execute("UPDATE velo SET strava_gear_id = 'b1' WHERE name = 'A'")
+        db.execute("UPDATE velo SET strava_gear_id = 'b2' WHERE name = 'B'")
+        db.execute("UPDATE velo SET km_stand_datum = '2026-01-01'")
+        db.commit()
+        strava.kilometer_uebernehmen(
+            [
+                {"id": "b1", "name": "A", "km": 1500},
+                {"id": "b2", "name": "B", "km": 4000},  # unverändert
+            ]
+        )
+        zeilen = db.execute(
+            "SELECT name, km_stand_datum, km_stand_quelle FROM velo ORDER BY name"
+        ).fetchall()
+
+    assert [tuple(z) for z in zeilen] == [
+        ("A", "2026-10-12", "strava"),
+        ("B", "2026-01-01", "manuell"),
+    ]
+
+
 def test_abgleich_mit_verbindung(client, app, monkeypatch):
     app.config.update(STRAVA_CLIENT_ID="1", STRAVA_CLIENT_SECRET="geheim")
     erfasse_velo(client, name="A", km_stand=100)

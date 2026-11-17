@@ -36,6 +36,7 @@ BESCHRIFTUNG = {
     "gewicht_kg": "Gewicht",
     "preis_chf": "Preis",
     "km_stand": "Kilometerstand",
+    "km_plus": "Gefahrene km",
     "bezeichnung": "Bezeichnung",
     "modell": "Modellnr.",
     "einbau_datum": "Einbaudatum",

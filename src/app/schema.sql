@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS velo (
     gewicht_kg      REAL,
     preis_chf       REAL,
     km_stand        INTEGER NOT NULL DEFAULT 0 CHECK (km_stand >= 0),
+    -- Wann und woher der Kilometerstand zuletzt geändert wurde (Issue #2)
+    km_stand_datum  TEXT,
+    km_stand_quelle TEXT CHECK (km_stand_quelle IN ('manuell', 'strava')),
     strava_gear_id  TEXT UNIQUE,
     erstellt_am     TEXT    NOT NULL DEFAULT (date('now'))
 );

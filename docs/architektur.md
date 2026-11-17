@@ -74,6 +74,8 @@ erDiagram
         real gewicht_kg
         real preis_chf
         int km_stand
+        text km_stand_datum
+        text km_stand_quelle
         text strava_gear_id UK
         text erstellt_am
     }
@@ -220,7 +222,7 @@ sequenceDiagram
     end
     A->>S: GET /athlete
     S-->>A: Strava-Velos mit Distanz in Metern
-    A->>D: km_stand verknüpfter Velos erhöhen
+    A->>D: km_stand verknüpfter Velos erhöhen (Quelle «strava»)
     A->>N: Weiterleitung zur Übersicht
 ```
 
