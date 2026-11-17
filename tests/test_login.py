@@ -73,13 +73,32 @@ def test_falsche_zugangsdaten_werden_abgelehnt(anonym, name, passwort):
     assert anonym.get("/").status_code == 302
 
 
-def test_ungueltiger_hash_in_der_datenbank(anonym, app):
-    # z.B. Passwort statt Hash von Hand in die Datenbank eingetragen
+def trage_benutzer_ein(app, passwort_hash):
     with app.app_context():
         db = get_db()
-        db.execute("INSERT INTO benutzer (name, passwort_hash) VALUES ('x', 'abc')")
+        db.execute(
+            "INSERT INTO benutzer (name, passwort_hash) VALUES ('x', ?)",
+            (passwort_hash,),
+        )
         db.commit()
+
+
+def test_passwort_statt_hash_in_der_datenbank(anonym, app):
+    # Passwort von Hand statt Hash eingetragen: Werkzeug lehnt es einfach ab
+    trage_benutzer_ein(app, "abc")
     assert melde_an(anonym, name="x", passwort="abc").status_code == 401
+
+
+def test_ungueltiger_hash_in_der_datenbank(anonym, app):
+    # Sieht aus wie ein Hash, aber mit unbekanntem Verfahren: Werkzeug wirft
+    # einen ValueError, die App darf daran nicht abstürzen
+    trage_benutzer_ein(app, "unbekannt$salz$hash")
+    assert melde_an(anonym, name="x", passwort="abc").status_code == 401
+
+
+def test_schon_angemeldet_login_seite_leitet_weiter(client):
+    assert client.get("/login").location == "/"
+    assert client.get("/login?next=/velos/neu").location == "/velos/neu"
 
 
 def test_navigation_zeigt_benutzer(client):

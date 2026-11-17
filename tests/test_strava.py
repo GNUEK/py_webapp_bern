@@ -205,3 +205,125 @@ def test_strava_nicht_erreichbar_zeigt_meldung(client, app, monkeypatch):
     antwort = client.get("/strava")
     assert antwort.status_code == 200
     assert "Strava-Daten nicht lesbar" in antwort.text
+
+
+# --- Verbinden und Rückmeldung von Strava (OAuth) ----------------------------
+
+
+def setze_state(client, state="zufall"):
+    with client.session_transaction() as session:
+        session["strava_state"] = state
+
+
+def test_verbinden_leitet_mit_zufaelligem_state_zu_strava(client, app):
+    konfiguriere_strava(app)
+    antwort = client.get("/strava/verbinden")
+
+    assert antwort.status_code == 302
+    ziel = antwort.headers["Location"]
+    assert ziel.startswith(strava.AUTHORIZE_URL)
+    assert "client_id=1" in ziel
+    assert "profile%3Aread_all" in ziel
+    # Der state in der Adresse muss derselbe sein wie in der Session
+    with client.session_transaction() as session:
+        state = session["strava_state"]
+    assert f"state={state}" in ziel
+    assert "geheim" not in ziel  # Das Client-Secret verlässt den Server nie
+
+
+def test_callback_bei_abbruch_speichert_nichts(client, app):
+    konfiguriere_strava(app)
+    setze_state(client)
+    antwort = client.get(
+        "/strava/callback?error=access_denied&state=zufall", follow_redirects=True
+    )
+    assert "abgebrochen" in antwort.text
+    assert token_zeile(app) is None
+
+
+def test_callback_ohne_profil_berechtigung_warnt(client, app, monkeypatch):
+    konfiguriere_strava(app)
+    setze_state(client)
+    monkeypatch.setattr(
+        strava.requests,
+        "post",
+        lambda url, data, timeout: FakeAntwort(
+            {"access_token": "neu", "refresh_token": "r", "expires_at": 9e9}
+        ),
+    )
+    antwort = client.get(
+        "/strava/callback?code=c1&state=zufall&scope=read", follow_redirects=True
+    )
+    assert "Ohne «Profil lesen»" in antwort.text
+    assert token_zeile(app)["access_token"] == "neu"  # trotzdem verbunden
+
+
+def test_callback_wenn_strava_nicht_antwortet(client, app, monkeypatch):
+    konfiguriere_strava(app)
+    setze_state(client)
+
+    def fake_post(*args, **kwargs):
+        raise strava.requests.ConnectionError("keine Verbindung")
+
+    monkeypatch.setattr(strava.requests, "post", fake_post)
+    antwort = client.get(
+        "/strava/callback?code=c1&state=zufall&scope=read,profile:read_all",
+        follow_redirects=True,
+    )
+    assert "Anmeldung bei Strava fehlgeschlagen" in antwort.text
+    assert token_zeile(app) is None
+
+
+def test_verknuepfen_mit_unbekanntem_velo(client):
+    antwort = client.post(
+        "/strava/verknuepfen",
+        data={"velo_id": 99, "strava_gear_id": "b1"},
+        follow_redirects=True,
+    )
+    assert "Unbekanntes Velo." in antwort.text
+
+
+# --- Kilometer abgleichen: Fehlerfälle ----------------------------------------
+
+
+def test_abgleich_ohne_konfiguration(client):
+    antwort = client.post("/strava/abgleichen", follow_redirects=True)
+    assert "nicht konfiguriert" in antwort.text
+
+
+def test_abgleich_ohne_verbindung(client, app):
+    konfiguriere_strava(app)
+    antwort = client.post("/strava/abgleichen", follow_redirects=True)
+    assert "Zuerst mit Strava verbinden" in antwort.text
+
+
+def test_abgleich_wenn_strava_nicht_antwortet(client, app, monkeypatch):
+    konfiguriere_strava(app)
+    speichere_token(app, expires_at=0)  # muss erneuert werden
+
+    def fake_post(*args, **kwargs):
+        raise strava.requests.Timeout("zu langsam")
+
+    monkeypatch.setattr(strava.requests, "post", fake_post)
+    antwort = client.post("/strava/abgleichen", follow_redirects=True)
+    assert "Anmeldung bei Strava fehlgeschlagen" in antwort.text
+
+
+def test_abgleich_ohne_neue_kilometer(client, app, monkeypatch):
+    konfiguriere_strava(app)
+    erfasse_velo(client, name="A", km_stand=500)
+    speichere_token(app, expires_at=2_000_000_000)
+    with app.app_context():
+        db = get_db()
+        db.execute("UPDATE velo SET strava_gear_id = 'b1'")
+        db.commit()
+
+    monkeypatch.setattr(
+        strava.requests,
+        "get",
+        lambda *args, **kwargs: FakeAntwort(
+            {"bikes": [{"id": "b1", "name": "A", "distance": 400_000}]}
+        ),
+    )
+    antwort = client.post("/strava/abgleichen", follow_redirects=True)
+    assert "Keine neuen Kilometer" in antwort.text

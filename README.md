@@ -84,6 +84,10 @@ uv run pytest        # Tests mit Abdeckungsbericht
 uv run ruff check .  # Code-Stil
 ```
 
+pytest schlägt fehl, wenn die Abdeckung unter 90 % fällt. Was wie getestet
+wird, steht im [Testkonzept](docs/testkonzept.md), das Warum in
+[Entscheid 0012](docs/decisions/0012-teststrategie.md).
+
 ### Einstellungen
 
 Lokal liest die App eine Datei `.env` (Vorlage: `.env.example`).

@@ -184,7 +184,40 @@ def test_wartung_am_selben_tag_ist_erlaubt(client):
     assert antwort.status_code == 302
 
 
+def test_wartung_mit_mehr_km_als_das_velo_wird_abgelehnt(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, einbau_km="0")
+    antwort = client.post(
+        "/komponenten/1/wartung", data={"datum": "2026-10-12", "km_stand": "1001"}
+    )
+    assert antwort.status_code == 400
+    assert "grösser als der des Velos" in antwort.text
+    assert komponenten(app)[0]["letzte_wartung_km"] == 0
+
+
+def test_wartung_mit_km_vor_der_letzten_wartung_wird_abgelehnt(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, einbau_km="500")
+    antwort = client.post(
+        "/komponenten/1/wartung", data={"datum": "2026-10-12", "km_stand": "499"}
+    )
+    assert antwort.status_code == 400
+    assert "liegt vor der letzten Wartung" in antwort.text
+    assert komponenten(app)[0]["letzte_wartung_km"] == 500
+
+
 # K2 / K3: Komponenten -----------------------------------------------------
+
+
+def test_formular_neue_komponente_ist_vorausgefuellt(client):
+    erfasse_velo(client, km_stand=4321)
+    formular = client.get("/velos/1/komponenten/neu").text
+    assert 'value="2026-10-12"' in formular  # heute (fest in conftest)
+    assert 'value="4321"' in formular  # aktueller Kilometerstand
+
+
+def test_unbekannte_komponente_gibt_404(client):
+    assert client.get("/komponenten/99/tauschen").status_code == 404
 
 
 def test_zubehoer_ohne_intervall(client, app):
@@ -237,6 +270,27 @@ def test_komponente_tauschen(client, app):
     assert alt[0]["ausbau_km"] == 3200
     assert [k["bezeichnung"] for k in neu] == ["Neue Kette"]
     assert neu[0]["letzte_wartung_km"] == 3200
+
+
+def test_ausgebaute_komponente_kann_nicht_getauscht_werden(client, app):
+    erfasse_velo(client)
+    erfasse_komponente(client)
+    client.post("/komponenten/1/ausbauen")
+
+    antwort = client.get("/komponenten/1/tauschen", follow_redirects=True)
+    assert "bereits ausgebaut" in antwort.text
+    antwort = tausche(client, einbau_km="1000")
+    assert antwort.status_code == 302
+    assert komponenten(app, aktiv=1) == []  # keine neue Komponente
+
+
+def test_ungueltiger_tausch_aendert_nichts(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, bezeichnung="Alte Kette")
+    antwort = tausche(client, bezeichnung="", einbau_km="1000")
+    assert antwort.status_code == 400
+    assert [k["bezeichnung"] for k in komponenten(app)] == ["Alte Kette"]
+    assert komponenten(app, aktiv=0) == []
 
 
 def bearbeite_komponente(client, komponente_id=1, **werte):
@@ -418,6 +472,17 @@ def test_nur_letzte_wartung_kann_geloescht_werden(client, app):
     assert client.get("/velos/1").text.count('/loeschen"') == 2  # Velo + Wartung
 
 
+def test_wartung_ausgebauter_komponente_bleibt_im_verlauf(client, app):
+    erfasse_velo(client, km_stand=1000)
+    erfasse_komponente(client, einbau_km="0")
+    warte(client, "2026-06-01", 500)
+    client.post("/komponenten/1/ausbauen")
+
+    antwort = client.post("/wartungen/1/loeschen", follow_redirects=True)
+    assert "bleiben im Verlauf" in antwort.text
+    assert anzahl_wartungen(app) == 1
+
+
 def test_unbekannte_wartung_gibt_404(client):
     assert client.post("/wartungen/99/loeschen").status_code == 404
 
@@ -483,6 +548,14 @@ def test_ausbau_rueckgaengig(client, app):
     assert komponente["bezeichnung"] == "Garmin"
     assert komponente["ausbau_datum"] is None
     assert komponente["ausbau_km"] is None
+
+
+def test_eingebaute_komponente_nicht_wieder_einbauen(client, app):
+    erfasse_velo(client)
+    erfasse_komponente(client)
+    antwort = client.post("/komponenten/1/ausbau-rueckgaengig", follow_redirects=True)
+    assert "nicht ausgebaut" in antwort.text
+    assert len(komponenten(app)) == 1
 
 
 def test_getauschte_komponente_nicht_einzeln_einbauen(client, app):

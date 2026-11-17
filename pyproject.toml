@@ -63,3 +63,5 @@ source = ["app"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
+# Unter 90 % schlägt pytest fehl (lokal und in der CI), siehe docs/testkonzept.md
+fail_under = 90
