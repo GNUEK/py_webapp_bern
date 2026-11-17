@@ -382,6 +382,19 @@ def komponente_tauschen(komponente_id: int):
 
     fehler = f.Fehlerliste()
     daten = komponente_aus_formular(fehler, velo)
+    # Der Tausch ist gleichzeitig der Ausbau der alten Komponente. Er darf nicht
+    # vor ihrer letzten Wartung (bzw. ihrem Einbau) liegen, sonst hätte sie im
+    # Verlauf eine negative Laufleistung.
+    if daten["einbau_km"] is not None and daten["einbau_km"] < alt["letzte_wartung_km"]:
+        fehler.append(
+            f"Der Kilometerstand beim Tausch liegt vor der letzten Wartung bzw. dem "
+            f"Einbau von «{alt['bezeichnung']}» ({alt['letzte_wartung_km']} km)."
+        )
+    if daten["einbau_datum"] and daten["einbau_datum"] < alt["letzte_wartung_datum"]:
+        fehler.append(
+            f"Das Datum des Tauschs liegt vor der letzten Wartung bzw. dem Einbau "
+            f"von «{alt['bezeichnung']}» ({alt['letzte_wartung_datum']})."
+        )
     if fehler:
         for meldung in fehler:
             flash(meldung, "danger")
@@ -478,6 +491,10 @@ def komponente_ausbauen(komponente_id: int):
     """Komponente ohne Ersatz entfernen. Sie bleibt im Verlauf sichtbar."""
     komponente = lade_komponente(komponente_id)
     velo = lade_velo(komponente["velo_id"])
+    if not komponente["aktiv"]:
+        # Sonst würden Ausbaudatum und -kilometer überschrieben
+        flash("Diese Komponente ist bereits ausgebaut.", "warning")
+        return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
     db = get_db()
     db.execute(
         "UPDATE komponente SET aktiv = 0, ausbau_datum = ?, ausbau_km = ? WHERE id = ?",
@@ -566,6 +583,10 @@ def wartung_erfassen(komponente_id: int):
     """K1/K5: Wartung als erledigt markieren, mit Checkliste."""
     komponente = lade_komponente(komponente_id)
     velo = lade_velo(komponente["velo_id"])
+    if not komponente["aktiv"]:
+        # Eine solche Wartung liesse sich auch nicht mehr löschen
+        flash("Ausgebaute Komponenten können nicht gewartet werden.", "warning")
+        return redirect(url_for("velos.velo_detail", velo_id=velo["id"]))
     checkliste = [
         punkt.strip()
         for punkt in (komponente["checkliste"] or "").splitlines()

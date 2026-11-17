@@ -125,8 +125,9 @@ Kilometer sie gehalten hat. Bei einem Tausch zeigt die neue Komponente mit
 `vorgaenger_id` auf die alte. Darüber lässt sich der Tausch rückgängig
 machen ([Entscheid 0007](decisions/0007-nur-letzten-schritt-rueckgaengig.md)).
 
-`BENUTZER` und `STRAVA_TOKEN` stehen für sich allein: Alle angemeldeten
-Benutzer sehen dieselben Velos, und es gibt nur eine Strava-Verbindung
+`BENUTZER` und `STRAVA_TOKEN` stehen für sich allein: Das Team teilt sich
+einen Benutzer, die Velos gehören keinem bestimmten Benutzer, und es gibt
+nur eine Strava-Verbindung
 ([Entscheide 0009](decisions/0009-benutzer-in-der-datenbank.md) und
 [0010](decisions/0010-strava-app-und-verbindung.md)).
 

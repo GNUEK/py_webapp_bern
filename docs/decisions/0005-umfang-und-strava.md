@@ -4,7 +4,10 @@ Date: 2026-10-12
 
 ## Status
 
-Accepted
+Accepted. Der Login wurde später doch umgesetzt, siehe
+[0006](0006-login-passwort.md) und [0009](0009-benutzer-in-der-datenbank.md).
+Die Aussagen «Login nicht umgesetzt» und «Ohne Login» unten sind damit
+überholt.
 
 ## Context
 

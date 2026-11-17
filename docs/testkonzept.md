@@ -4,7 +4,7 @@ Dieses Dokument beschreibt, wie das Velo-Wartungslogbuch getestet wird und
 was die Tests abdecken. Warum wir so testen, steht im
 [Entscheid 0012](decisions/0012-teststrategie.md).
 
-Stand: 17.11.2026, 159 Tests, Abdeckung 99.9 % (Zeilen und Zweige)
+Stand: 17.11.2026, 164 Tests, Abdeckung 99.9 % (Zeilen und Zweige)
 
 ## Ziel
 
@@ -91,7 +91,7 @@ kaum herbeizuführen sind. Die echte Verbindung wurde von Hand lokal getestet
 | Velo bearbeiten | `test_velo_bearbeiten.py` | Formular vorausgefüllt, km dürfen nicht sinken |
 | Kilometer eintragen und korrigieren | `test_seiten.py` | km sinken nur mit Bestätigung und nie unter eine Komponente |
 | Wartung erfassen | `test_seiten.py` | Zähler zurückgesetzt, Checkliste, Datum und km gegen Einbau, letzte Wartung und Velo geprüft |
-| Komponenten ergänzen, bearbeiten, tauschen | `test_seiten.py` | Kategorie, Zubehör ohne Intervall, Tausch übernimmt Werte, ausgebaute nicht änderbar |
+| Komponenten ergänzen, bearbeiten, tauschen | `test_seiten.py` | Kategorie, Zubehör ohne Intervall, Tausch übernimmt Werte und liegt nicht vor der letzten Wartung, ausgebaute nicht änderbar, wartbar oder nochmals ausbaubar |
 | Rückgängig machen | `test_seiten.py` | nur der letzte Schritt, Tausch erst nach Löschen der Wartungen, Sicherheitsabfrage |
 | Ersatzhinweis | `test_seiten.py` | Hinweis im Wartungsformular, beim Tausch übernommen |
 | Datenbank-Migration | `test_seiten.py` | alte Datenbanken erhalten neue Spalten |
@@ -114,7 +114,7 @@ ohne Tests dazukommt.
 | Darstellung im Browser (Bootstrap, CSS, Mobile) | keine Browser-Tests, siehe Entscheid 0012 | von Hand |
 | Bestätigungsdialoge (`confirm()` vor Löschen und Rückgängig) | die Tests prüfen nur, dass der Dialog im HTML steht | von Hand |
 | Eingabeprüfung im Browser (`required`, `type="number"` usw.) | nur Komfort, der Server prüft nochmals (getestet) | nicht nötig |
-| Echte Strava-Verbindung | braucht ein Strava-Konto und Internet | von Hand lokal (Entscheid 0010) |
+| Echte Strava-Verbindung | braucht ein Strava-Konto und Internet | von Hand lokal und auf Azure (Entscheid 0010) |
 | Deployment auf Azure | läuft nur in GitHub Actions | nach dem Deployment von Hand |
 | `startup.sh`, Gunicorn | nur auf Azure relevant | über das Deployment |
 

@@ -30,8 +30,9 @@ Tabelle `benutzer` mit `name` und `passwort_hash` (Werkzeug-Hash). Keine
 Registrierung in der App: Den Hash erzeugt
 `uv run flask --app src/app passwort-hash`, eingetragen wird er mit dem
 Skript `tools/benutzer_setzen.py`, auf Azure über die SSH-Konsole.
-Alle Benutzer sehen dieselben Daten. Für den Prototyp verwenden wir bewusst
-nur einen gemeinsamen Benutzer. Entschieden vom Projektteam
+Technisch kann die Tabelle mehrere Benutzer enthalten, alle sähen dieselben
+Daten. Für den Prototyp verwenden wir bewusst nur einen gemeinsamen Benutzer
+für das ganze Team. Entschieden vom Projektteam
 (Joel Schwarz) nach der Rückmeldung im Kurs.
 
 Zuerst war die VS-Code-Erweiterung SQLite als DB-Tool vorgesehen. Sie

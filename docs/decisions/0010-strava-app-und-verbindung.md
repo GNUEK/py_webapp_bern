@@ -4,7 +4,7 @@ Date: 2026-11-14
 
 ## Status
 
-Accepted (Test auf Azure steht noch aus, Issue #10)
+Accepted
 
 ## Context
 
@@ -78,5 +78,5 @@ Entschieden vom Projektteam bei der Arbeit an Issue #10.
    `strava_token.benutzer_id` und angepasste Abfragen in `strava.py`.
  * Test vom 2026-11-14 bestätigt: Lokal (`localhost`) klappt der ganze
    Ablauf, obwohl in Strava die Azure-Domain eingetragen ist. Getestet:
-   verbinden, Velo zuordnen, Kilometer übernehmen. Der Test auf Azure steht
-   noch aus.
+   verbinden, Velo zuordnen, Kilometer übernehmen. Danach hat derselbe Ablauf
+   auch auf Azure funktioniert.

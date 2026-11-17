@@ -100,9 +100,11 @@ Lokal liest die App eine Datei `.env` (Vorlage: `.env.example`).
 
 ### Login
 
-Man meldet sich mit Benutzername und Passwort an. Die Benutzer stehen in der
-Tabelle `benutzer`, alle sehen dieselben Daten
-([Entscheid 0009](docs/decisions/0009-benutzer-in-der-datenbank.md)). Ohne
+Man meldet sich mit Benutzername und Passwort an. Das Team verwendet bewusst
+einen gemeinsamen Benutzer
+([Entscheid 0009](docs/decisions/0009-benutzer-in-der-datenbank.md)). Er
+steht in der Tabelle `benutzer`. Technisch wären dort mehrere Benutzer
+möglich, sie sähen aber alle dieselben Daten. Ohne
 Anmeldung leitet jede Seite auf `/login` weiter. In der Tabelle steht nur ein
 Hash des Passworts, nie das Passwort selbst.
 
@@ -206,8 +208,9 @@ Danach http://localhost:8000 öffnen und anmelden.
 
 Die App ist ein Prototyp für den Kurs. Bewusst nicht umgesetzt:
 
-* **Gemeinsame Daten:** Alle angemeldeten Benutzer sehen und ändern
-  dieselben Velos. Es gibt keine Rollen und keine Registrierung
+* **Ein gemeinsamer Benutzer:** Das Team teilt sich ein Login. Würde man
+  weitere Benutzer anlegen, sähen und änderten sie dieselben Velos. Es gibt
+  keine Rollen und keine Registrierung
   ([0009](docs/decisions/0009-benutzer-in-der-datenbank.md)).
 * **Eine Strava-Verbindung** für alle. Eine neue Strava-App lässt zudem nur
   das Konto zu, das sie angelegt hat
@@ -226,7 +229,7 @@ Die App ist ein Prototyp für den Kurs. Bewusst nicht umgesetzt:
 ```
 src/app/
 ├── __init__.py   App erstellen und konfigurieren (create_app, app)
-├── auth.py       Login mit Benutzern aus der DB, Prüfung vor jeder Anfrage
+├── auth.py       Login mit Benutzer aus der DB, Prüfung vor jeder Anfrage
 ├── views.py      Seiten und Operationen: Velos, Komponenten, Wartung
 ├── strava.py     Strava-Anmeldung (OAuth2) und Kilometerabgleich
 ├── wartung.py    Fälligkeitslogik, ohne Flask und ohne Datenbank
@@ -238,7 +241,7 @@ src/app/
 └── static/       CSS
 tests/            pytest: Fälligkeitslogik, Seiten, Strava (ohne echten Aufruf)
 docs/             Architektur und Entscheide
-tools/            benutzer_setzen.py: Benutzer anlegen (lokal und Azure)
+tools/            benutzer_setzen.py: Benutzer anlegen oder Passwort ändern
 ```
 
 Die wichtigsten Ideen:
