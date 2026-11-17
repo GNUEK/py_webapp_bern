@@ -726,3 +726,98 @@ def test_alte_datenbank_bekommt_spalte_ersatzhinweis(tmp_path):
     spalten = [s[1] for s in verbindung.execute("PRAGMA table_info(komponente)")]
     verbindung.close()
     assert "ersatzhinweis" in spalten
+
+
+# Issue #2: Kilometerstand verständlich nachführen --------------------------
+
+
+def test_neues_velo_hat_datum_und_quelle(client, app):
+    erfasse_velo(client, km_stand=1000)
+    assert velo(app)["km_stand_datum"] == "2026-10-12"  # HEUTE aus conftest
+    assert velo(app)["km_stand_quelle"] == "manuell"
+
+
+def test_nachfuehren_setzt_datum_und_quelle(client, app):
+    erfasse_velo(client, km_stand=1000)
+    with app.app_context():
+        db = get_db()
+        db.execute("UPDATE velo SET km_stand_datum = '2026-01-01'")
+        db.commit()
+    client.post("/velos/1/kilometer", data={"km_stand": "1200"})
+    assert velo(app)["km_stand_datum"] == "2026-10-12"
+    assert velo(app)["km_stand_quelle"] == "manuell"
+
+
+def test_gefahrene_km_werden_dazugezaehlt(client, app):
+    erfasse_velo(client, km_stand=1000)
+    client.post("/velos/1/kilometer", data={"km_plus": "45"})
+    assert velo(app)["km_stand"] == 1045
+
+
+def test_gefahrene_km_muessen_positiv_sein(client, app):
+    erfasse_velo(client, km_stand=1000)
+    for wert in ["0", "-5", "", "abc"]:
+        antwort = client.post(
+            "/velos/1/kilometer", data={"km_plus": wert}, follow_redirects=True
+        )
+        assert "Gefahrene km" in antwort.text
+    assert velo(app)["km_stand"] == 1000
+
+
+def test_bearbeiten_setzt_datum_nur_bei_neuem_km_stand(client, app):
+    erfasse_velo(client, name="Gravel", km_stand=1000)
+    with app.app_context():
+        db = get_db()
+        db.execute("UPDATE velo SET km_stand_datum = '2026-01-01'")
+        db.commit()
+
+    client.post("/velos/1/bearbeiten", data={"name": "Neu", "km_stand": "1000"})
+    assert velo(app)["km_stand_datum"] == "2026-01-01"
+
+    client.post("/velos/1/bearbeiten", data={"name": "Neu", "km_stand": "1100"})
+    assert velo(app)["km_stand_datum"] == "2026-10-12"
+
+
+def test_detailseite_erklaert_die_eingabe(client, app):
+    erfasse_velo(client, km_stand=1000)
+    seite = client.get("/velos/1").text
+    assert "Neuer Gesamtkilometerstand" in seite
+    assert "nicht die gefahrenen km" in seite
+    assert "Stand vom 2026-10-12" in seite
+    assert "von Hand eingetragen" in seite
+    assert "Oder gefahrene km dazuzählen" in seite
+    assert "Mit Strava verknüpft" not in seite
+
+
+def test_detailseite_ohne_datum_und_mit_strava(client, app):
+    erfasse_velo(client, km_stand=1000)
+    with app.app_context():
+        db = get_db()
+        db.execute("UPDATE velo SET km_stand_datum = NULL, strava_gear_id = 'b1'")
+        db.commit()
+    seite = client.get("/velos/1").text
+    assert "Datum der letzten Änderung unbekannt" in seite
+    assert "Mit Strava verknüpft" in seite
+    assert "wenn dieser höher ist" in seite
+
+
+def test_alte_datenbank_bekommt_spalten_fuer_km_stand(tmp_path):
+    import sqlite3
+
+    from app.db import init_db
+
+    pfad = str(tmp_path / "alt.db")
+    verbindung = sqlite3.connect(pfad)
+    verbindung.execute(
+        "CREATE TABLE velo (id INTEGER PRIMARY KEY, name TEXT, km_stand INTEGER)"
+    )
+    verbindung.commit()
+    verbindung.close()
+
+    init_db(pfad)
+
+    verbindung = sqlite3.connect(pfad)
+    spalten = [s[1] for s in verbindung.execute("PRAGMA table_info(velo)")]
+    verbindung.close()
+    assert "km_stand_datum" in spalten
+    assert "km_stand_quelle" in spalten

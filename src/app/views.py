@@ -31,6 +31,19 @@ def heute() -> date:
     return current_app.config.get("HEUTE") or date.today()
 
 
+def setze_km_stand(velo_id: int, km_stand: int, quelle: str) -> None:
+    """Speichert einen neuen Kilometerstand mit Datum und Quelle (Issue #2).
+
+    ``quelle`` ist "manuell" (von Hand eingetragen) oder "strava".
+    Speichern (commit) muss der Aufrufer.
+    """
+    get_db().execute(
+        "UPDATE velo SET km_stand = ?, km_stand_datum = ?, km_stand_quelle = ?"
+        " WHERE id = ?",
+        (km_stand, heute().isoformat(), quelle, velo_id),
+    )
+
+
 # --------------------------------------------------------------------------
 # Hilfsfunktionen für die Datenbank
 # --------------------------------------------------------------------------
@@ -160,10 +173,10 @@ def velo_neu():
     db = get_db()
     cursor = db.execute(
         """INSERT INTO velo (name, typ, rahmennummer, groesse, gewicht_kg,
-                             preis_chf, km_stand)
+                             preis_chf, km_stand, km_stand_datum, km_stand_quelle)
            VALUES (:name, :typ, :rahmennummer, :groesse, :gewicht_kg,
-                   :preis_chf, :km_stand)""",
-        daten,
+                   :preis_chf, :km_stand, :km_stand_datum, 'manuell')""",
+        {**daten, "km_stand_datum": heute().isoformat()},
     )
     velo_id = cursor.lastrowid
 
@@ -238,10 +251,12 @@ def velo_bearbeiten(velo_id: int):
     db.execute(
         """UPDATE velo SET name = :name, typ = :typ, rahmennummer = :rahmennummer,
                   groesse = :groesse, gewicht_kg = :gewicht_kg,
-                  preis_chf = :preis_chf, km_stand = :km_stand
+                  preis_chf = :preis_chf
            WHERE id = :id""",
         {**daten, "id": velo_id},
     )
+    if daten["km_stand"] != velo["km_stand"]:
+        setze_km_stand(velo_id, daten["km_stand"], "manuell")
     db.commit()
     flash("Änderungen gespeichert.", "success")
     return redirect(url_for("velos.velo_detail", velo_id=velo_id))
@@ -259,10 +274,19 @@ def velo_loeschen(velo_id: int):
 
 @bp.post("/velos/<int:velo_id>/kilometer")
 def kilometer_nachfuehren(velo_id: int):
-    """K1: Neuen Kilometerstand eintragen."""
+    """K1: Neuen Kilometerstand eintragen.
+
+    Zwei Formulare schicken hierher: eines mit dem neuen Gesamtstand
+    (``km_stand``), eines mit den gefahrenen km (``km_plus``). Bei
+    ``km_plus`` rechnet der Server den neuen Stand selbst aus.
+    """
     velo = lade_velo(velo_id)
     fehler = f.Fehlerliste()
-    neu = f.ganzzahl(request.form, "km_stand", fehler, pflicht=True)
+    if "km_plus" in request.form:
+        plus = f.ganzzahl(request.form, "km_plus", fehler, pflicht=True, minimum=1)
+        neu = velo["km_stand"] + plus if plus is not None else None
+    else:
+        neu = f.ganzzahl(request.form, "km_stand", fehler, pflicht=True)
     if neu is not None and neu < velo["km_stand"]:
         if not request.form.get("korrigieren"):
             fehler.append(
@@ -291,9 +315,8 @@ def kilometer_nachfuehren(velo_id: int):
         for meldung in fehler:
             flash(meldung, "danger")
     else:
-        db = get_db()
-        db.execute("UPDATE velo SET km_stand = ? WHERE id = ?", (neu, velo_id))
-        db.commit()
+        setze_km_stand(velo_id, neu, "manuell")
+        get_db().commit()
         flash(f"Kilometerstand auf {neu} km gesetzt.", "success")
     return redirect(url_for("velos.velo_detail", velo_id=velo_id))
 

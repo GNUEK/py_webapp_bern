@@ -29,6 +29,7 @@ from flask import (
 )
 
 from .db import get_db
+from .views import setze_km_stand
 
 bp = Blueprint("strava", __name__, url_prefix="/strava")
 
@@ -138,10 +139,7 @@ def kilometer_uebernehmen(strava_velos: list[dict]) -> list[str]:
             "SELECT * FROM velo WHERE strava_gear_id = ?", (strava_velo["id"],)
         ).fetchone()
         if velo is not None and strava_velo["km"] > velo["km_stand"]:
-            db.execute(
-                "UPDATE velo SET km_stand = ? WHERE id = ?",
-                (strava_velo["km"], velo["id"]),
-            )
+            setze_km_stand(velo["id"], strava_velo["km"], "strava")
             geaendert.append(f"{velo['name']}: {strava_velo['km']} km")
     db.commit()
     return geaendert

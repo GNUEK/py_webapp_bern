@@ -50,3 +50,9 @@ def init_db(database_path: str) -> None:
                 "ALTER TABLE komponente ADD COLUMN vorgaenger_id INTEGER"
                 " REFERENCES komponente(id)"
             )
+        # Datum und Quelle des Kilometerstands (Issue #2)
+        spalten = [s[1] for s in connection.execute("PRAGMA table_info(velo)")]
+        if "km_stand_datum" not in spalten:
+            connection.execute("ALTER TABLE velo ADD COLUMN km_stand_datum TEXT")
+        if "km_stand_quelle" not in spalten:
+            connection.execute("ALTER TABLE velo ADD COLUMN km_stand_quelle TEXT")

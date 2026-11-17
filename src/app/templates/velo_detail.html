@@ -23,22 +23,50 @@
         <div class="card h-100">
             <div class="card-body">
                 <h2 class="h6 text-body-secondary">Kilometerstand</h2>
-                <p class="fs-3 fw-semibold mb-3">{{ velo.km_stand | km }} km</p>
+                <p class="fs-3 fw-semibold mb-0">{{ velo.km_stand | km }} km</p>
+                <p class="small text-body-secondary mb-3">
+                    {% if velo.km_stand_datum %}
+                    Stand vom {{ velo.km_stand_datum }} ·
+                    {{ 'von Strava übernommen' if velo.km_stand_quelle == 'strava' else 'von Hand eingetragen' }}
+                    {% else %}
+                    Datum der letzten Änderung unbekannt
+                    {% endif %}
+                </p>
+
+                {# Variante 1: neuer Gesamtstand (wie auf dem Tacho) #}
                 <form method="post" action="{{ url_for('velos.kilometer_nachfuehren', velo_id=velo.id) }}">
+                    <label class="form-label small fw-semibold" for="km_neu">Neuer Gesamtkilometerstand</label>
                     <div class="d-flex gap-2">
-                        <label class="visually-hidden" for="km_neu">Neuer Kilometerstand</label>
                         <input class="form-control" id="km_neu" name="km_stand" type="number" min="0"
-                            value="{{ velo.km_stand }}" required>
+                            value="{{ velo.km_stand }}" required aria-describedby="km_neu_hilfe">
                         <button class="btn btn-primary text-nowrap">Nachführen</button>
                     </div>
-                    <div class="form-check mt-2">
+                    <div class="form-text" id="km_neu_hilfe">Gesamtstand laut Tacho, nicht die gefahrenen km.</div>
+                    <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" id="korrigieren" name="korrigieren" value="1">
                         <label class="form-check-label small" for="korrigieren">Kilometerstand korrigieren
                             (darf kleiner werden, z.B. nach Tippfehler)</label>
                     </div>
                 </form>
+
+                {# Variante 2: gefahrene km, der Server zählt sie zum Stand dazu #}
+                <form class="mt-3" method="post" action="{{ url_for('velos.kilometer_nachfuehren', velo_id=velo.id) }}">
+                    <label class="form-label small fw-semibold" for="km_plus">Oder gefahrene km dazuzählen</label>
+                    <div class="d-flex gap-2">
+                        <div class="input-group">
+                            <span class="input-group-text">+</span>
+                            <input class="form-control" id="km_plus" name="km_plus" type="number" min="1" required>
+                        </div>
+                        <button class="btn btn-outline-primary text-nowrap">Dazuzählen</button>
+                    </div>
+                </form>
+
                 {% if velo.strava_gear_id %}
-                <p class="small text-body-secondary mt-2 mb-0">Mit Strava verknüpft</p>
+                <p class="small alert alert-info py-2 mt-3 mb-0">
+                    Mit Strava verknüpft: «Kilometer von Strava holen» setzt den Stand
+                    auf den Wert von Strava, wenn dieser höher ist. Ein höherer Stand
+                    von Hand bleibt erhalten.
+                </p>
                 {% endif %}
             </div>
         </div>
